@@ -1,8 +1,9 @@
 using Config.Server.Api.Http.Models;
-using Config.Server.Application.Contracts;
+using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Contracts.Operations;
+using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
-using Config.Server.Application.Models.Queries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Config.Server.Api.Http.Controllers;
@@ -19,7 +20,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}")]
-    public IAsyncEnumerable<ConfigItemResponseDto> GetConfigs(
+    public IAsyncEnumerable<ConfigItemResponseDto> QueryConfigsAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
@@ -33,15 +34,24 @@ public class ConfigController : ControllerBase
         return config.Select(x => new ConfigItemResponseDto(x.Key, x.Value));
     }
 
-    [HttpGet("{key}")]
-    public async Task<ActionResult<ConfigItem>> GetConfig(string key)
+    [HttpGet("{project}/{profile}/{environment}/{key}")]
+    public async Task<ActionResult<ConfigItem>> GetConfigByKeyAsync(
+        [FromRoute] string project,
+        [FromRoute] string profile,
+        [FromRoute] string environment,
+        [FromRoute] string key)
     {
-        try
+        GetConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment));
+        GetConfig.Result result = await _configService.GetConfigByKeyAsync(request, HttpContext.RequestAborted);
+
+        if (result is GetConfig.Result.Success successResult)
         {
-            ConfigItem config = await _configService.GetConfigAsync(key, HttpContext.RequestAborted);
-            return Ok(config);
+            return Ok(
+                new ConfigItemResponseDto(
+                    successResult.ConfigItem.Key,
+                    successResult.ConfigItem.Value));
         }
-        catch (KeyNotFoundException)
+        else
         {
             return NotFound();
         }
@@ -91,6 +101,19 @@ public class ConfigController : ControllerBase
         }
 
         return Ok();
+    }
+
+    [HttpDelete("{project}/{profile}/{environment}/{key}")]
+    public async Task<IActionResult> DeleteConfigAsync(
+        [FromRoute] string project,
+        [FromRoute] string profile,
+        [FromRoute] string environment,
+        [FromRoute] string key)
+    {
+        DeleteConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment));
+        DeleteConfig.Result result = await _configService.DeleteConfigAsync(request, HttpContext.RequestAborted);
+
+        return result is DeleteConfig.Result.Success successResult ? Ok() : NotFound();
     }
 
     private ConfigEnvironment StringToConfigEnvironment(string input)

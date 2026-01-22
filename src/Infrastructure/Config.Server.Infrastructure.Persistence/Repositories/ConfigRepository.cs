@@ -1,7 +1,7 @@
-using Config.Server.Application.Abstractions;
+using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
-using Config.Server.Application.Models.Queries;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Npgsql;
 using System.Data;
@@ -18,7 +18,7 @@ public class ConfigRepository : IConfigRepository
         _dataSource = dataSource;
     }
 
-    public async Task AddOrUpdateConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
+    public async Task<ConfigItem> AddOrUpdateConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
     {
         using NpgsqlConnection connection = _dataSource.CreateConnection();
 
@@ -28,7 +28,8 @@ public class ConfigRepository : IConfigRepository
         const string sqlQuery = """
         insert into configurations (key, value, namespace, profile, environment, created_at, updated_at, created_by)
         values (:key, :value, :namespace, :profile, :environment, :created_at, :updated_at, :created_by)
-        on conflict on constraint unique_config_record do update set value = excluded.value;
+        on conflict on constraint unique_config_record do update set value = excluded.value
+        returning id, (xmax != 0) as is_updated;
         """;
 
         await using NpgsqlCommand command = connection.CreateCommand();
@@ -43,7 +44,10 @@ public class ConfigRepository : IConfigRepository
             .AddParameter("updated_at", configItem.UpdatedAt)
             .AddParameter("created_by", configItem.CreatedBy);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await reader.ReadAsync(cancellationToken);
+
+        return configItem with { Id = reader.GetInt64("id") };
     }
 
     public async IAsyncEnumerable<ConfigItem> QueryConfigsAsync(
@@ -66,14 +70,14 @@ public class ConfigRepository : IConfigRepository
             and (:profile is null or profile like :profile)
             and (:environment is null or :environment = any(environment))
         order by key asc
-        limit :pageSize;
+        limit :page_size;
         """;
 
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = sqlQuery;
         command
             .AddParameter("cursor", query.Cursor)
-            .AddParameter("pageSize", query.PageSize)
+            .AddParameter("page_size", query.PageSize)
             .AddParameter("keys", query.Keys)
             .AddParameter("namespace", query.Namespace)
             .AddParameter("profile", query.Profile)
@@ -96,7 +100,12 @@ public class ConfigRepository : IConfigRepository
         }
     }
 
-    public async Task<bool> DeleteConfigAsync(string key, CancellationToken cancellationToken)
+    public async Task<long> DeleteConfigAsync(
+        string project,
+        string profile,
+        ConfigEnvironment environment,
+        string key,
+        CancellationToken cancellationToken)
     {
         using NpgsqlConnection connection = _dataSource.CreateConnection();
 
@@ -104,15 +113,27 @@ public class ConfigRepository : IConfigRepository
             await connection.OpenAsync(cancellationToken);
 
         const string sqlQuery = """
-        delete from configurations
-        where key = :key;
+        update configurations
+        set is_deleted = true
+        where
+            key = :key
+            and namespace = :namespace
+            and profile = :profile
+            and :environment = any(environment)
+        returning id;
         """;
 
-        await using NpgsqlCommand command = new NpgsqlCommand(sqlQuery, connection)
-            .AddParameter("key", key);
+        await using NpgsqlCommand command = connection.CreateCommand();
+        command.CommandText = sqlQuery;
+        command
+            .AddParameter("key", key)
+            .AddParameter("namespace", project)
+            .AddParameter("profile", profile)
+            .AddParameter("environment", environment, dataTypeName: "config_environment");
 
-        int affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await reader.ReadAsync(cancellationToken);
 
-        return affectedRows > 0;
+        return reader.GetInt64("id");
     }
 }

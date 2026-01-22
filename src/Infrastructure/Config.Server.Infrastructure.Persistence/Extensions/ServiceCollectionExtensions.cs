@@ -1,7 +1,7 @@
-using Config.Server.Application.Abstractions;
+using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Models.Enums;
-using Config.Server.Application.Models.Options;
 using Config.Server.Infrastructure.Persistence.Migrations;
+using Config.Server.Infrastructure.Persistence.Options;
 using Config.Server.Infrastructure.Persistence.Repositories;
 using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,10 +19,9 @@ public static class ServiceCollectionExtensions
             IOptions<ConnectionOptions> options = provider.GetRequiredService<IOptions<ConnectionOptions>>();
             ConnectionOptions connection = options.Value;
 
-            Console.WriteLine(connection.ConnectionString);
-
             var builder = new NpgsqlDataSourceBuilder(connection.ConnectionString);
             builder.MapEnum<ConfigEnvironment>(pgName: "config_environment");
+            builder.MapEnum<ConfigHistoryKind>(pgName: "config_history_kind");
 
             return builder.Build();
         });
@@ -31,6 +30,7 @@ public static class ServiceCollectionExtensions
             provider.GetRequiredService<NpgsqlDataSource>().CreateConnection());
 
         services.AddScoped<IConfigRepository, ConfigRepository>();
+        services.AddScoped<IConfigHistoryRepository, ConfigHistoryRepository>();
 
         return services;
     }

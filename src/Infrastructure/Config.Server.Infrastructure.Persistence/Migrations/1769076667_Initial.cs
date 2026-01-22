@@ -31,6 +31,8 @@ public class Initial : IMigration, IMigrationAssemblyMarker
                 updated_at  timestamp with time zone not null default now(),
                 created_by  text not null,
 
+                is_deleted  bool default false,
+
                 constraint unique_config_record
                     unique (namespace, profile, environment, key)
             );

@@ -1,4 +1,5 @@
-using Config.Server.Application.Contracts;
+using Config.Server.Application.Contracts.Services;
+using Config.Server.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Config.Server.Application.Extensions;

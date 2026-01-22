@@ -1,6 +1,6 @@
 using Config.Server.Application.Extensions;
-using Config.Server.Application.Models.Options;
 using Config.Server.Infrastructure.Persistence.Extensions;
+using Config.Server.Infrastructure.Persistence.Options;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 
@@ -21,4 +21,4 @@ app.UseSwaggerUI();
 
 await app.Services.MigrationsUp();
 
-app.Run();
+await app.RunAsync();

@@ -11,4 +11,5 @@ public record class ConfigItem(
     ConfigEnvironment[] Environment,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    string CreatedBy);
+    string CreatedBy,
+    bool IsDeleted = false);

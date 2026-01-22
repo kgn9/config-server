@@ -1,6 +1,6 @@
 using Config.Server.Application.Models.Enums;
 
-namespace Config.Server.Application.Models.Queries;
+namespace Config.Server.Application.Abstractions.Queries;
 
 public record class ConfigQuery(
     string[] Keys,

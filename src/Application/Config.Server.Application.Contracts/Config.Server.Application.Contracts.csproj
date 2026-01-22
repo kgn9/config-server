@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Config.Server.Application.Abstractions\Config.Server.Application.Abstractions.csproj" />
     <ProjectReference Include="..\Config.Server.Application.Models\Config.Server.Application.Models.csproj" />
   </ItemGroup>
 
