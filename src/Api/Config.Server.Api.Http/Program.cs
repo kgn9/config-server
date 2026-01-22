@@ -1,5 +1,5 @@
 using Config.Server.Application.Extensions;
-using Config.Server.Application.Models;
+using Config.Server.Application.Models.Options;
 using Config.Server.Infrastructure.Persistence.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();

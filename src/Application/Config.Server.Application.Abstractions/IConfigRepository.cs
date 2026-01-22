@@ -1,10 +1,11 @@
-using Config.Server.Application.Models;
+using Config.Server.Application.Models.Entities;
+using Config.Server.Application.Models.Queries;
 
 namespace Config.Server.Application.Abstractions;
 
 public interface IConfigRepository
 {
-    Task AddOrUpdateConfigAsync(string key, string value, CancellationToken cancellationToken);
+    Task AddOrUpdateConfigAsync(ConfigItem configItem, CancellationToken cancellationToken);
 
     IAsyncEnumerable<ConfigItem> QueryConfigsAsync(ConfigQuery query, CancellationToken cancellationToken);
 

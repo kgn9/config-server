@@ -1,4 +1,4 @@
-namespace Config.Server.Application.Models;
+namespace Config.Server.Application.Models.Options;
 
 public class ConnectionOptions
 {

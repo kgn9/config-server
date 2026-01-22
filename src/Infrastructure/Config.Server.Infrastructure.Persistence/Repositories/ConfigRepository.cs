@@ -1,5 +1,7 @@
 using Config.Server.Application.Abstractions;
-using Config.Server.Application.Models;
+using Config.Server.Application.Models.Entities;
+using Config.Server.Application.Models.Enums;
+using Config.Server.Application.Models.Queries;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Npgsql;
 using System.Data;
@@ -16,7 +18,7 @@ public class ConfigRepository : IConfigRepository
         _dataSource = dataSource;
     }
 
-    public async Task AddOrUpdateConfigAsync(string key, string value, CancellationToken cancellationToken)
+    public async Task AddOrUpdateConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
     {
         using NpgsqlConnection connection = _dataSource.CreateConnection();
 
@@ -24,14 +26,22 @@ public class ConfigRepository : IConfigRepository
             await connection.OpenAsync(cancellationToken);
 
         const string sqlQuery = """
-        insert into configurations (key, value)
-        values (:key, :value)
-        on conflict (key) do update set value = excluded.value;
+        insert into configurations (key, value, namespace, profile, environment, created_at, updated_at, created_by)
+        values (:key, :value, :namespace, :profile, :environment, :created_at, :updated_at, :created_by)
+        on conflict on constraint unique_config_record do update set value = excluded.value;
         """;
 
-        await using NpgsqlCommand command = new NpgsqlCommand(sqlQuery, connection)
-            .AddParameter("key", key)
-            .AddParameter("value", value);
+        await using NpgsqlCommand command = connection.CreateCommand();
+        command.CommandText = sqlQuery;
+        command
+            .AddParameter("key", configItem.Key)
+            .AddParameter("value", configItem.Value)
+            .AddParameter("namespace", configItem.Namespace)
+            .AddParameter("profile", configItem.Profile)
+            .AddParameter("environment", configItem.Environment)
+            .AddParameter("created_at", configItem.CreatedAt)
+            .AddParameter("updated_at", configItem.UpdatedAt)
+            .AddParameter("created_by", configItem.CreatedBy);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -46,24 +56,43 @@ public class ConfigRepository : IConfigRepository
             await connection.OpenAsync(cancellationToken);
 
         const string sqlQuery = """
-        select key, value
+        select 
+            id, key, value, namespace, profile, environment, created_at, updated_at, created_by
         from configurations
-        where id >= :cursor
+        where
+            id >= :cursor
+            and (cardinality(:keys) = 0 or key = any(:keys))
+            and (:namespace is null or namespace like :namespace)
+            and (:profile is null or profile like :profile)
+            and (:environment is null or :environment = any(environment))
         order by key asc
         limit :pageSize;
         """;
 
-        await using NpgsqlCommand command = new NpgsqlCommand(sqlQuery, connection)
+        await using NpgsqlCommand command = connection.CreateCommand();
+        command.CommandText = sqlQuery;
+        command
             .AddParameter("cursor", query.Cursor)
-            .AddParameter("pageSize", query.PageSize);
+            .AddParameter("pageSize", query.PageSize)
+            .AddParameter("keys", query.Keys)
+            .AddParameter("namespace", query.Namespace)
+            .AddParameter("profile", query.Profile)
+            .AddParameter("environment", query.Environment, dataTypeName: "config_environment");
 
         NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
             yield return new ConfigItem(
+                reader.GetInt64("id"),
                 reader.GetString("key"),
-                reader.GetString("value"));
+                reader.GetString("value"),
+                reader.GetString("namespace"),
+                reader.GetString("profile"),
+                reader.GetFieldValue<ConfigEnvironment[]>("environment"),
+                reader.GetDateTime("created_at"),
+                reader.GetDateTime("updated_at"),
+                reader.GetString("created_by"));
         }
     }
 

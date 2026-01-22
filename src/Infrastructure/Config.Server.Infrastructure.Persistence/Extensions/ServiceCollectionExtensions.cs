@@ -1,5 +1,6 @@
 using Config.Server.Application.Abstractions;
-using Config.Server.Application.Models;
+using Config.Server.Application.Models.Enums;
+using Config.Server.Application.Models.Options;
 using Config.Server.Infrastructure.Persistence.Migrations;
 using Config.Server.Infrastructure.Persistence.Repositories;
 using FluentMigrator.Runner;
@@ -21,6 +22,7 @@ public static class ServiceCollectionExtensions
             Console.WriteLine(connection.ConnectionString);
 
             var builder = new NpgsqlDataSourceBuilder(connection.ConnectionString);
+            builder.MapEnum<ConfigEnvironment>(pgName: "config_environment");
 
             return builder.Build();
         });

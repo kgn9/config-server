@@ -1,10 +1,11 @@
-using Config.Server.Application.Models;
+using Config.Server.Application.Models.Entities;
+using Config.Server.Application.Models.Queries;
 
 namespace Config.Server.Application.Contracts;
 
 public interface IConfigService
 {
-    Task SetConfigAsync(string key, string value, CancellationToken cancellationToken);
+    Task SetConfigAsync(ConfigItem configItem, CancellationToken cancellationToken);
 
     Task<ConfigItem> GetConfigAsync(string key, CancellationToken cancellationToken);
 
