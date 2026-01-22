@@ -1,4 +1,18 @@
 <Solution>
-    <Folder Name="/src/" />
+    <Folder Name="/src/">
+        <File Path="src/docker-compose.yml" />
+    </Folder>
+    <Folder Name="/src/Api/">
+        <Project Path="src/Api/Config.Server.Api.Http/Config.Server.Api.Http.csproj" />
+    </Folder>
+    <Folder Name="/src/Application/">
+        <Project Path="src/Application/Config.Server.Application.Abstractions/Config.Server.Application.Abstractions.csproj" />
+        <Project Path="src/Application/Config.Server.Application.Contracts/Config.Server.Application.Contracts.csproj" />
+        <Project Path="src/Application/Config.Server.Application.Models/Config.Server.Application.Models.csproj" />
+        <Project Path="src/Application/Config.Server.Application/Config.Server.Application.csproj" />
+    </Folder>
+    <Folder Name="/src/Infrastructure/">
+        <Project Path="src/Infrastructure/Config.Server.Infrastructure.Persistence/Config.Server.Infrastructure.Persistence.csproj" />
+    </Folder>
     <Folder Name="/tests/" />
 </Solution>
