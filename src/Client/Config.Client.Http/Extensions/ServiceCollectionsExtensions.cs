@@ -1,10 +1,10 @@
-﻿using Config.Server.ApiClient.Models;
+﻿using Config.Client.Http.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Refit;
 
-namespace Config.Server.ApiClient.Extensions;
+namespace Config.Client.Http.Extensions;
 
 public static class ServiceCollectionsExtensions
 {

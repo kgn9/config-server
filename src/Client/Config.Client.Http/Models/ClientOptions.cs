@@ -1,4 +1,4 @@
-﻿namespace Config.Server.ApiClient.Models;
+﻿namespace Config.Client.Http.Models;
 
 public class ClientOptions
 {

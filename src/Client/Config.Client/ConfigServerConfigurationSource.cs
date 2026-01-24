@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Config.Server.Provider;
+namespace Config.Client;
 
 internal class ConfigServerConfigurationSource : IConfigurationSource
 {

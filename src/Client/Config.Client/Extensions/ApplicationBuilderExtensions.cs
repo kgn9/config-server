@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 
-namespace Config.Server.Provider.Extensions;
+namespace Config.Client.Extensions;
 
 public static class ApplicationBuilderExtensions
 {

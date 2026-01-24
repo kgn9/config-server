@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Provider\Config.Server.Provider\Config.Server.Provider.csproj" />
+      <ProjectReference Include="..\..\src\Client\Config.Client\Config.Client.csproj" />
     </ItemGroup>
 
 </Project>

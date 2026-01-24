@@ -1,7 +1,7 @@
-﻿using Config.Server.ApiClient.Models;
+﻿using Config.Client.Http.Models;
 using Refit;
 
-namespace Config.Server.ApiClient;
+namespace Config.Client.Http;
 
 public interface IConfigApiClient
 {

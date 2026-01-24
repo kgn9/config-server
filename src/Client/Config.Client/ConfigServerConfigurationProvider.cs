@@ -1,10 +1,10 @@
-﻿using Config.Server.ApiClient;
-using Config.Server.ApiClient.Models;
-using Config.Server.Provider.Options;
+﻿using Config.Client.Http;
+using Config.Client.Http.Models;
+using Config.Client.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
-namespace Config.Server.Provider;
+namespace Config.Client;
 
 internal class ConfigServerConfigurationProvider : ConfigurationProvider
 {

@@ -4,14 +4,19 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Config.Server.Provider</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="Microsoft.Extensions.Http" />
-      <PackageReference Include="Refit" />
-      <PackageReference Include="Refit.HttpClientFactory" />
-      <PackageReference Include="System.Net.Http" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Config.Client.Http\Config.Client.Http.csproj" />
     </ItemGroup>
 
 </Project>

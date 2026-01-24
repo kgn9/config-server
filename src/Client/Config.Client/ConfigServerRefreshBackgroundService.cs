@@ -1,8 +1,8 @@
-﻿using Config.Server.Provider.Options;
+﻿using Config.Client.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace Config.Server.Provider;
+namespace Config.Client;
 
 internal class ConfigServerRefreshBackgroundService : BackgroundService
 {

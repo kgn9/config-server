@@ -1,4 +1,4 @@
-using Config.Server.Provider.Extensions;
+using Config.Client.Extensions;
 using Microsoft.Extensions.Options;
 using TestWebApp;
 
