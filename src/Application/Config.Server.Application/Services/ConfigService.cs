@@ -35,7 +35,7 @@ internal class ConfigService : IConfigService
             configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
 
             HistoryItem historyItem = new(
-                0,
+                Id: default,
                 configItem.Id,
                 ConfigHistoryKind.Updated,
                 oldConfigItem.Value,
@@ -50,7 +50,7 @@ internal class ConfigService : IConfigService
             configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
 
             HistoryItem historyItem = new(
-                0,
+                Id: default,
                 configItem.Id,
                 ConfigHistoryKind.Created,
                 "none",
@@ -84,26 +84,43 @@ internal class ConfigService : IConfigService
     {
         using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        long id = await _configRepository.DeleteConfigAsync(
-            request.Namespace,
-            request.Profile,
-            request.Environment,
-            request.Key,
-            cancellationToken);
+        GetConfig.Request searchRequest = new(request.Key, request.Namespace, request.Profile, request.Environment);
+        GetConfig.Result searchResult = await GetConfigByKeyAsync(searchRequest, cancellationToken);
 
-        HistoryItem historyItem = new(
-            0,
-            id,
-            ConfigHistoryKind.Deleted,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            DateTime.Now);
+        switch (searchResult)
+        {
+            case GetConfig.Result.Success successResult:
+            {
+                long configId = await _configRepository.DeleteConfigAsync(
+                    request.Namespace,
+                    request.Profile,
+                    request.Environment,
+                    request.Key,
+                    cancellationToken);
 
-        await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
+                HistoryItem historyItem = new(
+                    Id: default,
+                    configId,
+                    ConfigHistoryKind.Deleted,
+                    successResult.ConfigItem.Value,
+                    "none",
+                    request.DeletedBy,
+                    DateTime.Now);
 
-        transaction.Complete();
+                await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
 
-        return new DeleteConfig.Result.Success();
+                transaction.Complete();
+
+                return new DeleteConfig.Result.Success();
+            }
+
+            case GetConfig.Result.ConfigNotFound:
+                transaction.Complete();
+                return new DeleteConfig.Result.ConfigNotFound();
+
+            default:
+                transaction.Complete();
+                return new DeleteConfig.Result.Failure();
+        }
     }
 }

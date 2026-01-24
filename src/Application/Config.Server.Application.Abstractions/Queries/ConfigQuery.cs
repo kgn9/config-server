@@ -8,4 +8,5 @@ public record class ConfigQuery(
     string? Profile,
     ConfigEnvironment? Environment,
     int PageSize,
-    long Cursor = 0);
+    long Cursor = 0,
+    bool IsDeleted = false);

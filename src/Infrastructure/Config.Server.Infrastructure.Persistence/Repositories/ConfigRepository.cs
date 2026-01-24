@@ -20,7 +20,7 @@ public class ConfigRepository : IConfigRepository
 
     public async Task<ConfigItem> AddOrUpdateConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection = _dataSource.CreateConnection();
+        await using NpgsqlConnection connection = _dataSource.CreateConnection();
 
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
@@ -29,7 +29,7 @@ public class ConfigRepository : IConfigRepository
         insert into configurations (key, value, namespace, profile, environment, created_at, updated_at, created_by)
         values (:key, :value, :namespace, :profile, :environment, :created_at, :updated_at, :created_by)
         on conflict on constraint unique_config_record do update set value = excluded.value
-        returning id, (xmax != 0) as is_updated;
+        returning id;
         """;
 
         await using NpgsqlCommand command = connection.CreateCommand();
@@ -44,7 +44,7 @@ public class ConfigRepository : IConfigRepository
             .AddParameter("updated_at", configItem.UpdatedAt)
             .AddParameter("created_by", configItem.CreatedBy);
 
-        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);
 
         return configItem with { Id = reader.GetInt64("id") };
@@ -54,7 +54,7 @@ public class ConfigRepository : IConfigRepository
         ConfigQuery query,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection = _dataSource.CreateConnection();
+        await using NpgsqlConnection connection = _dataSource.CreateConnection();
 
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
@@ -69,6 +69,7 @@ public class ConfigRepository : IConfigRepository
             and (:namespace is null or namespace like :namespace)
             and (:profile is null or profile like :profile)
             and (:environment is null or :environment = any(environment))
+            and is_deleted = :is_deleted
         order by key asc
         limit :page_size;
         """;
@@ -81,9 +82,10 @@ public class ConfigRepository : IConfigRepository
             .AddParameter("keys", query.Keys)
             .AddParameter("namespace", query.Namespace)
             .AddParameter("profile", query.Profile)
-            .AddParameter("environment", query.Environment, dataTypeName: "config_environment");
+            .AddParameter("environment", query.Environment, dataTypeName: "config_environment")
+            .AddParameter("is_deleted", query.IsDeleted);
 
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
@@ -107,7 +109,7 @@ public class ConfigRepository : IConfigRepository
         string key,
         CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection = _dataSource.CreateConnection();
+        await using NpgsqlConnection connection = _dataSource.CreateConnection();
 
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
@@ -131,7 +133,7 @@ public class ConfigRepository : IConfigRepository
             .AddParameter("profile", profile)
             .AddParameter("environment", environment, dataTypeName: "config_environment");
 
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);
 
         return reader.GetInt64("id");

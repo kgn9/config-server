@@ -4,12 +4,19 @@ namespace Config.Server.Application.Contracts.Operations;
 
 public static class DeleteConfig
 {
-    public sealed record Request(string Key, string Namespace, string Profile, ConfigEnvironment Environment);
+    public sealed record Request(
+        string Key,
+        string Namespace,
+        string Profile,
+        ConfigEnvironment Environment,
+        string DeletedBy);
 
     public abstract record Result
     {
         public sealed record Success : Result;
 
         public sealed record ConfigNotFound : Result;
+
+        public sealed record Failure : Result;
     }
 }

@@ -20,7 +20,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}")]
-    public IAsyncEnumerable<ConfigItemResponseDto> QueryConfigsAsync(
+    public QueryConfigsResponseDto QueryConfigsAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
@@ -31,7 +31,9 @@ public class ConfigController : ControllerBase
         ConfigQuery query = new([], project, profile, env, pageSize, cursor);
         IAsyncEnumerable<ConfigItem> config = _configService.QueryConfigsAsync(query, HttpContext.RequestAborted);
 
-        return config.Select(x => new ConfigItemResponseDto(x.Key, x.Value));
+        IAsyncEnumerable<ConfigItemResponseDto> dtos = config.Select(x => new ConfigItemResponseDto(x.Key, x.Value));
+
+        return new QueryConfigsResponseDto(dtos);
     }
 
     [HttpGet("{project}/{profile}/{environment}/{key}")]
@@ -62,7 +64,7 @@ public class ConfigController : ControllerBase
     {
         ConfigEnvironment[] envs = config.Environments.Select(x => StringToConfigEnvironment(x)).ToArray();
         ConfigItem configItem = new(
-            0,
+            Id: default,
             config.Key,
             config.Value,
             config.Namespace,
@@ -87,7 +89,7 @@ public class ConfigController : ControllerBase
         foreach ((string? key, string? value) in configs)
         {
             ConfigItem configItem = new(
-                0,
+                Id: default,
                 key,
                 value,
                 project,
@@ -108,9 +110,10 @@ public class ConfigController : ControllerBase
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
-        [FromRoute] string key)
+        [FromRoute] string key,
+        [FromQuery] string deletedBy)
     {
-        DeleteConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment));
+        DeleteConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment), deletedBy);
         DeleteConfig.Result result = await _configService.DeleteConfigAsync(request, HttpContext.RequestAborted);
 
         return result is DeleteConfig.Result.Success successResult ? Ok() : NotFound();
@@ -123,7 +126,6 @@ public class ConfigController : ControllerBase
             "dev" => ConfigEnvironment.Dev,
             "stage" => ConfigEnvironment.Stage,
             "prod" => ConfigEnvironment.Prod,
-            "global" => ConfigEnvironment.Global,
             _ => ConfigEnvironment.Global,
         };
     }

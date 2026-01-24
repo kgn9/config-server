@@ -20,14 +20,14 @@ public class ConfigHistoryRepository : IConfigHistoryRepository
 
     public async Task AddRecordAsync(HistoryItem record, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection = _dataSource.CreateConnection();
+        await using NpgsqlConnection connection = _dataSource.CreateConnection();
 
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
         const string sqlQuery = """
         insert into configuration_history (config_id, operation, old_value, new_value, changed_by, changed_at)
-        values (:config_id, :operation, :old_value, :new_value, :changed_by, :changed_at)
+        values (:config_id, :operation, :old_value, :new_value, :changed_by, :changed_at);
         """;
 
         await using NpgsqlCommand command = connection.CreateCommand();
@@ -47,7 +47,7 @@ public class ConfigHistoryRepository : IConfigHistoryRepository
         HistoryQuery query,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection = _dataSource.CreateConnection();
+        await using NpgsqlConnection connection = _dataSource.CreateConnection();
 
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
@@ -61,7 +61,7 @@ public class ConfigHistoryRepository : IConfigHistoryRepository
             and (cardinality(:operations) = 0 or operation = any(:operations))
             and (:changed_by is null or changed_by like :changed_by)
         order by config_id asc
-        limit :page_size
+        limit :page_size;
         """;
 
         await using NpgsqlCommand command = connection.CreateCommand();
@@ -73,7 +73,7 @@ public class ConfigHistoryRepository : IConfigHistoryRepository
             .AddParameter("changed_by", query.ChangedBy)
             .AddParameter("page_size", query.PageSize);
 
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
