@@ -13,4 +13,6 @@ public class ProviderOptions
     public int Cursor { get; set; }
 
     public TimeSpan UpdateInterval { get; set; }
+
+    public string Url { get; set; } = string.Empty;
 }

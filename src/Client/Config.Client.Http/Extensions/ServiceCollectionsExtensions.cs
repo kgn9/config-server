@@ -1,24 +1,15 @@
-﻿using Config.Client.Http.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Refit;
 
 namespace Config.Client.Http.Extensions;
 
 public static class ServiceCollectionsExtensions
 {
-    public static IServiceCollection AddApiClient(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddApiClient(this IServiceCollection services, Uri url)
     {
-        services.Configure<ClientOptions>(configuration.GetSection("Config"));
         services
             .AddRefitClient<IConfigApiClient>()
-            .ConfigureHttpClient((provider,  client) =>
-            {
-                ClientOptions clientOptions = provider.GetRequiredService<IOptions<ClientOptions>>().Value;
-
-                client.BaseAddress = new Uri(clientOptions.Url);
-            });
+            .ConfigureHttpClient(client => client.BaseAddress = url);
 
         return services;
     }

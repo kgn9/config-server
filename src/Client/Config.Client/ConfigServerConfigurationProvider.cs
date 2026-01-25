@@ -2,16 +2,15 @@
 using Config.Client.Http.Models;
 using Config.Client.Options;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 
 namespace Config.Client;
 
 internal class ConfigServerConfigurationProvider : ConfigurationProvider
 {
     private readonly IConfigApiClient _client;
-    private readonly IOptions<ProviderOptions> _options;
+    private readonly ProviderOptions _options;
 
-    internal ConfigServerConfigurationProvider(IConfigApiClient client, IOptions<ProviderOptions> options)
+    internal ConfigServerConfigurationProvider(IConfigApiClient client, ProviderOptions options)
     {
         _options = options;
         _client = client;
@@ -19,13 +18,12 @@ internal class ConfigServerConfigurationProvider : ConfigurationProvider
 
     public async Task ReloadAsync(CancellationToken cancellationToken)
     {
-        ProviderOptions providerOptions = _options.Value;
         ConfigurationsPage page = await _client.GetConfigurationsAsync(
-            providerOptions.Project,
-            providerOptions.Profile,
-            providerOptions.Environment,
-            providerOptions.PageSize,
-            providerOptions.Cursor,
+            _options.Project,
+            _options.Profile,
+            _options.Environment,
+            _options.PageSize,
+            _options.Cursor,
             cancellationToken);
 
         bool reloadFlag = false;

@@ -5,7 +5,12 @@ using TestWebApp;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<TestConfig>(builder.Configuration);
-builder.Services.AddConfigServer(builder.Configuration);
+builder.Services.AddConfigServer(
+    builder.Configuration,
+    options =>
+    {
+        builder.Configuration.GetSection("Config").Bind(options);
+    });
 
 WebApplication app = builder.Build();
 
@@ -15,7 +20,8 @@ app.MapGet(
     "/hello",
     (HttpContext context) =>
     {
-        IOptionsSnapshot<TestConfig> options = context.RequestServices.GetRequiredService<IOptionsSnapshot<TestConfig>>();
+        IOptionsSnapshot<TestConfig> options = context.RequestServices
+            .GetRequiredService<IOptionsSnapshot<TestConfig>>();
         return options.Value.Line;
     });
 

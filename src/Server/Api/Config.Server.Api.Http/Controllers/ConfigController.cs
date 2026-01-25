@@ -5,6 +5,7 @@ using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Config.Server.Api.Http.Controllers;
 
@@ -78,29 +79,45 @@ public class ConfigController : ControllerBase
         return Ok();
     }
 
+    [HttpPost("{project}/{profile}/{environment}/{key}")]
+    public async Task<IActionResult> SetConfigByKey(
+        [FromRoute] string project,
+        [FromRoute] string profile,
+        [FromRoute] string environment,
+        [FromRoute] string key,
+        [FromQuery] string value,
+        [FromQuery] string createdBy)
+    {
+        ConfigItem item = new(
+            Id: default,
+            key,
+            value,
+            project,
+            profile,
+            [StringToConfigEnvironment(environment)],
+            DateTime.Now,
+            DateTime.Now,
+            createdBy);
+        await _configService.SetConfigAsync(item, HttpContext.RequestAborted);
+
+        return Ok();
+    }
+
     [HttpPost("{project}/{profile}/{environment}")]
     public async Task<IActionResult> SetConfigBatch(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
         [FromQuery] string creator,
-        [FromBody] Dictionary<string, string> configs)
+        [FromBody] JsonElement configs)
     {
-        foreach ((string? key, string? value) in configs)
-        {
-            ConfigItem configItem = new(
-                Id: default,
-                key,
-                value,
-                project,
-                profile,
-                [StringToConfigEnvironment(environment)],
-                DateTime.Now,
-                DateTime.Now,
-                creator);
-
-            await _configService.SetConfigAsync(configItem, HttpContext.RequestAborted);
-        }
+        SetConfigsBatch.Request request = new(
+            configs,
+            project,
+            profile,
+            StringToConfigEnvironment(environment),
+            creator);
+        await _configService.SetConfigsBatchAsync(request, HttpContext.RequestAborted);
 
         return Ok();
     }

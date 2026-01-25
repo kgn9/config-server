@@ -28,7 +28,8 @@ public class ConfigRepository : IConfigRepository
         const string sqlQuery = """
         insert into configurations (key, value, namespace, profile, environment, created_at, updated_at, created_by)
         values (:key, :value, :namespace, :profile, :environment, :created_at, :updated_at, :created_by)
-        on conflict on constraint unique_config_record do update set value = excluded.value
+        on conflict on constraint unique_config_record do update
+            set value = excluded.value, updated_at = excluded.updated_at
         returning id;
         """;
 
@@ -70,7 +71,7 @@ public class ConfigRepository : IConfigRepository
             and (:profile is null or profile like :profile)
             and (:environment is null or :environment = any(environment))
             and is_deleted = :is_deleted
-        order by key asc
+        order by key
         limit :page_size;
         """;
 

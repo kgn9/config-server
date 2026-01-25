@@ -4,6 +4,7 @@ using Config.Server.Application.Contracts.Operations;
 using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
+using System.Text.Json;
 using System.Transactions;
 
 namespace Config.Server.Application.Services;
@@ -64,6 +65,27 @@ internal class ConfigService : IConfigService
         transaction.Complete();
     }
 
+    public async Task SetConfigsBatchAsync(SetConfigsBatch.Request request, CancellationToken cancellationToken)
+    {
+        Dictionary<string, string> flattenedJson = new();
+        FlattenJson(request.Configs, string.Empty,  flattenedJson);
+
+        foreach (KeyValuePair<string, string> kv in flattenedJson)
+        {
+            ConfigItem item = new(
+                Id: default,
+                kv.Key,
+                kv.Value,
+                request.Project,
+                request.Profile,
+                [request.Environment],
+                DateTime.Now,
+                DateTime.Now,
+                request.CreatedBy);
+            await SetConfigAsync(item, cancellationToken);
+        }
+    }
+
     public async Task<GetConfig.Result> GetConfigByKeyAsync(GetConfig.Request request, CancellationToken cancellationToken)
     {
         ConfigQuery query = new([request.Key], request.Namespace, request.Profile, request.Environment, PageSize: 1);
@@ -121,6 +143,34 @@ internal class ConfigService : IConfigService
             default:
                 transaction.Complete();
                 return new DeleteConfig.Result.Failure();
+        }
+    }
+
+    private static void FlattenJson(JsonElement element, string prefix, Dictionary<string, string> result)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (JsonProperty property in element.EnumerateObject())
+                {
+                    string propName = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}:{property.Name}";
+                    FlattenJson(property.Value, propName, result);
+                }
+
+                break;
+
+            case JsonValueKind.Array:
+                int index = 0;
+                foreach (JsonElement item in element.EnumerateArray())
+                {
+                    FlattenJson(item, $"{prefix}:{index++}", result);
+                }
+
+                break;
+
+            default:
+                result[prefix] = element.ToString();
+                break;
         }
     }
 }

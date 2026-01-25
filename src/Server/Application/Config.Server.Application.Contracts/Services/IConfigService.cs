@@ -8,6 +8,8 @@ public interface IConfigService
 {
     Task SetConfigAsync(ConfigItem configItem, CancellationToken cancellationToken);
 
+    Task SetConfigsBatchAsync(SetConfigsBatch.Request request, CancellationToken cancellationToken);
+
     Task<GetConfig.Result> GetConfigByKeyAsync(GetConfig.Request request, CancellationToken cancellationToken);
 
     IAsyncEnumerable<ConfigItem> QueryConfigsAsync(ConfigQuery query, CancellationToken cancellationToken);
