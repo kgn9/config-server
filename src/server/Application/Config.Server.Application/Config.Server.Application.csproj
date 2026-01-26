@@ -19,5 +19,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
+    
+  <ItemGroup>
+    <InternalsVisibleTo Include="Config.Server.Tests" />  
+  </ItemGroup>  
 
 </Project>

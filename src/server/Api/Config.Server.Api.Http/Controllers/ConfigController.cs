@@ -38,7 +38,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}/{key}")]
-    public async Task<ActionResult<ConfigItem>> GetConfigByKeyAsync(
+    public async Task<ActionResult<ConfigItemResponseDto>> GetConfigByKeyAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
@@ -58,25 +58,6 @@ public class ConfigController : ControllerBase
         {
             return NotFound();
         }
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> SetConfig([FromBody] ConfigItemDto config)
-    {
-        ConfigEnvironment[] envs = config.Environments.Select(x => StringToConfigEnvironment(x)).ToArray();
-        ConfigItem configItem = new(
-            Id: default,
-            config.Key,
-            config.Value,
-            config.Namespace,
-            config.Profile,
-            envs,
-            DateTime.Now,
-            DateTime.Now,
-            config.CreatedBy);
-        await _configService.SetConfigAsync(configItem, HttpContext.RequestAborted);
-
-        return Ok();
     }
 
     [HttpPost("{project}/{profile}/{environment}/{key}")]

@@ -46,7 +46,7 @@ internal class ConfigService : IConfigService
 
             await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
         }
-        else if (result is GetConfig.Result.ConfigNotFound)
+        else if (result is GetConfig.Result.NotFound)
         {
             configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
 
@@ -92,7 +92,7 @@ internal class ConfigService : IConfigService
         ConfigItem[] configs = await _configRepository.QueryConfigsAsync(query, cancellationToken).ToArrayAsync(cancellationToken);
         ConfigItem? configItem = configs.FirstOrDefault();
 
-        return configItem is not null ? new GetConfig.Result.Success(configItem) : new GetConfig.Result.ConfigNotFound();
+        return configItem is not null ? new GetConfig.Result.Success(configItem) : new GetConfig.Result.NotFound();
     }
 
     public IAsyncEnumerable<ConfigItem> QueryConfigsAsync(
@@ -136,7 +136,7 @@ internal class ConfigService : IConfigService
                 return new DeleteConfig.Result.Success();
             }
 
-            case GetConfig.Result.ConfigNotFound:
+            case GetConfig.Result.NotFound:
                 transaction.Complete();
                 return new DeleteConfig.Result.ConfigNotFound();
 
@@ -162,9 +162,7 @@ internal class ConfigService : IConfigService
             case JsonValueKind.Array:
                 int index = 0;
                 foreach (JsonElement item in element.EnumerateArray())
-                {
                     FlattenJson(item, $"{prefix}:{index++}", result);
-                }
 
                 break;
 

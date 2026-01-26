@@ -11,6 +11,6 @@ public static class GetConfig
     {
         public sealed record Success(ConfigItem ConfigItem) : Result;
 
-        public sealed record ConfigNotFound : Result;
+        public sealed record NotFound : Result;
     }
 }

@@ -21,4 +21,8 @@
     <PackageReference Include="Npgsql" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Config.Server.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -1,23 +1,24 @@
 <Solution>
     <Folder Name="/src/" />
-    <Folder Name="/src/Client/">
-        <Project Path="src/Client/Config.Client.Http/Config.Client.Http.csproj" />
-        <Project Path="src/Client/Config.Client/Config.Client.csproj" />
+    <Folder Name="/src/clients/">
+        <Project Path="src/clients/Config.Client.Http/Config.Client.Http.csproj" />
+        <Project Path="src/clients/Config.Client/Config.Client.csproj" />
     </Folder>
-    <Folder Name="/src/Server/" />
-    <Folder Name="/src/Server/Api/">
+    <Folder Name="/src/server/" />
+    <Folder Name="/src/server/Api/">
         <Project Path="src/Server/Api/Config.Server.Api.Http/Config.Server.Api.Http.csproj" />
     </Folder>
-    <Folder Name="/src/Server/Application/">
-        <Project Path="src/Server/Application/Config.Server.Application.Abstractions/Config.Server.Application.Abstractions.csproj" />
-        <Project Path="src/Server/Application/Config.Server.Application.Contracts/Config.Server.Application.Contracts.csproj" />
-        <Project Path="src/Server/Application/Config.Server.Application.Models/Config.Server.Application.Models.csproj" />
-        <Project Path="src/Server/Application/Config.Server.Application/Config.Server.Application.csproj" />
+    <Folder Name="/src/server/Application/">
+        <Project Path="src/server/Application/Config.Server.Application.Abstractions/Config.Server.Application.Abstractions.csproj" />
+        <Project Path="src/server/Application/Config.Server.Application.Contracts/Config.Server.Application.Contracts.csproj" />
+        <Project Path="src/server/Application/Config.Server.Application.Models/Config.Server.Application.Models.csproj" />
+        <Project Path="src/server/Application/Config.Server.Application/Config.Server.Application.csproj" />
     </Folder>
-    <Folder Name="/src/Server/Infrastructure/">
-        <Project Path="src/Server/Infrastructure/Config.Server.Infrastructure.Persistence/Config.Server.Infrastructure.Persistence.csproj" />
+    <Folder Name="/src/server/Infrastructure/">
+        <Project Path="src/server/Infrastructure/Config.Server.Infrastructure.Persistence/Config.Server.Infrastructure.Persistence.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/Config.Server.Tests/Config.Server.Tests.csproj" />
         <Project Path="tests/TestWebApp/TestWebApp.csproj" />
     </Folder>
 </Solution>
