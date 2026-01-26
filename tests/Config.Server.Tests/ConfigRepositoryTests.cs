@@ -48,16 +48,7 @@ public class ConfigRepositoryTests : IAsyncLifetime
     public async Task AddOrUpdateAsync_ShouldInsert_WhenConfigIsNew()
     {
         // Arrange
-        ConfigItem item = new(
-            Id: 0,
-            "key1",
-            "value1",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCerator1");
+        ConfigItem item = TestHelper.CreateConfigItem("key1", "value1");
 
         const string sql = """
         select count(*) from configurations
@@ -81,16 +72,7 @@ public class ConfigRepositoryTests : IAsyncLifetime
     public async Task AddOrUpdateAsync_ShouldUpdate_WhenConfigExists()
     {
         // Arrange
-        ConfigItem existingItem = new(
-            Id: 0,
-            "existingKey",
-            "existingValue",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCerator1");
+        ConfigItem existingItem = TestHelper.CreateConfigItem("existingKey", "existingValue");
 
         ConfigItem updatedItem = existingItem with { Value = "updatedValue", UpdatedAt = DateTime.Today.AddDays(1) };
 
@@ -120,36 +102,9 @@ public class ConfigRepositoryTests : IAsyncLifetime
     public async Task QueryConfigsAsync_ShouldReturnCorrectConfigs_WhenConfigsArePresent()
     {
         // Arrange
-        ConfigItem item1 = new(
-            Id: 0,
-            "key1",
-            "value1",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCerator1");
-        ConfigItem item2 = new(
-            Id: 0,
-            "key2",
-            "value2",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCerator1");
-        ConfigItem item3 = new(
-            Id: 0,
-            "key3",
-            "value3",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCerator1");
+        ConfigItem item1 = TestHelper.CreateConfigItem("key1", "value1");
+        ConfigItem item2 = TestHelper.CreateConfigItem("key2", "value2");
+        ConfigItem item3 = TestHelper.CreateConfigItem("key3", "value3");
 
         item1 = await _configRepository.AddOrUpdateConfigAsync(item1, CancellationToken.None);
         item2 = await _configRepository.AddOrUpdateConfigAsync(item2, CancellationToken.None);

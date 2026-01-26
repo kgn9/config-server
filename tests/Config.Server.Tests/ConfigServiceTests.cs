@@ -28,16 +28,7 @@ public class ConfigServiceTests
     {
         // Arrange
         GetConfig.Request request = new("key1", "TestProject1", "test1", ConfigEnvironment.Global);
-        ConfigItem expected = new(
-            Id: 1,
-            "key1",
-            "value1",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCreator1");
+        ConfigItem expected = TestHelper.CreateConfigItem("key1", "value1");
 
         _configRepository
             .QueryConfigsAsync(
@@ -74,16 +65,7 @@ public class ConfigServiceTests
     public async Task SetConfigAsync_CreatesConfigAndHistory_WhenNewConfigAdded()
     {
         // Arrange
-        ConfigItem item = new(
-            Id: default,
-            "key1",
-            "value1",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCreator1");
+        ConfigItem item = TestHelper.CreateConfigItem("key1", "value1");
 
         _configRepository.
             QueryConfigsAsync(Arg.Any<ConfigQuery>(), Arg.Any<CancellationToken>())
@@ -110,26 +92,8 @@ public class ConfigServiceTests
     public async Task SetConfigAsync_ShouldUpdateConfigConfigAndHistory_WhenExistingConfigUpdated()
     {
         // Arrange
-        ConfigItem existingItem = new(
-            Id: default,
-            "existingKey",
-            "oldValue",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCreator1");
-        ConfigItem updatedItem = new(
-            Id: default,
-            "existingKey",
-            "newValue",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCreator1");
+        ConfigItem existingItem = TestHelper.CreateConfigItem("existingKey", "oldValue");
+        ConfigItem updatedItem = existingItem with { Value = "newValue" };
 
         _configRepository.
             QueryConfigsAsync(Arg.Any<ConfigQuery>(), Arg.Any<CancellationToken>())
@@ -162,16 +126,7 @@ public class ConfigServiceTests
             "test1",
             ConfigEnvironment.Global,
             "testCreator1");
-        ConfigItem existingItem = new(
-            Id: 1,
-            "existingKey",
-            "oldValue",
-            "TestProject1",
-            "test1",
-            [ConfigEnvironment.Global],
-            DateTime.Today,
-            DateTime.Today,
-            "testCreator1");
+        ConfigItem existingItem = TestHelper.CreateConfigItem("existingKey", "oldValue") with { Id = 1 };
 
         _configRepository
             .QueryConfigsAsync(Arg.Any<ConfigQuery>(), Arg.Any<CancellationToken>())
@@ -246,7 +201,7 @@ public class ConfigServiceTests
                 "Host": "localhost",
                 "Port": 5432
             },
-        "Tags": ["a", "b"]
+            "Tags": ["a", "b"]
         }
         """;
         JsonElement jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
@@ -288,27 +243,8 @@ public class ConfigServiceTests
         var query = new ConfigQuery([], "ns", "prof", ConfigEnvironment.Global, 10);
         ConfigItem[] expectedItems =
         [
-            new ConfigItem(
-                Id: 1,
-                "key1",
-                "value1",
-                "TestProject1",
-                "test1",
-                [ConfigEnvironment.Global],
-                DateTime.Today,
-                DateTime.Today,
-                "testCreator1"),
-
-            new ConfigItem(
-                Id: 2,
-                "key2",
-                "value2",
-                "TestProject1",
-                "test1",
-                [ConfigEnvironment.Global],
-                DateTime.Today,
-                DateTime.Today,
-                "testCreator1")
+            TestHelper.CreateConfigItem("key1", "value1") with { Id = 1 },
+            TestHelper.CreateConfigItem("key2", "value2") with { Id = 2 }
         ];
 
         _configRepository.QueryConfigsAsync(query, Arg.Any<CancellationToken>())
