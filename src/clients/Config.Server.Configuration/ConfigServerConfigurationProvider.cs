@@ -1,9 +1,9 @@
-﻿using Config.Client.Http;
-using Config.Client.Http.Models;
-using Config.Client.Options;
+﻿using Config.Server.Configuration.HttpClient;
+using Config.Server.Configuration.Models;
+using Config.Server.Configuration.Options;
 using Microsoft.Extensions.Configuration;
 
-namespace Config.Client;
+namespace Config.Server.Configuration;
 
 internal class ConfigServerConfigurationProvider : ConfigurationProvider
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Config.Client.Extensions;
+namespace Config.Server.Configuration.Extensions;
 
 internal static class ConfigurationBuilderExtensions
 {

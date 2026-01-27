@@ -1,4 +1,4 @@
-﻿namespace Config.Client.Options;
+﻿namespace Config.Server.Configuration.Options;
 
 public class ProviderOptions
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Config.Client;
+namespace Config.Server.Configuration;
 
 internal class ConfigServerRefreshMiddleware : IMiddleware
 {

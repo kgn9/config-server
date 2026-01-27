@@ -1,8 +1,7 @@
 <Solution>
     <Folder Name="/src/" />
     <Folder Name="/src/clients/">
-        <Project Path="src/clients/Config.Client.Http/Config.Client.Http.csproj" />
-        <Project Path="src/clients/Config.Client/Config.Client.csproj" />
+        <Project Path="src/clients/Config.Server.Configuration/Config.Server.Configuration.csproj" />
     </Folder>
     <Folder Name="/src/server/" />
     <Folder Name="/src/server/Api/">

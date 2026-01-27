@@ -1,10 +1,10 @@
-﻿using Config.Client.Http;
-using Config.Client.Http.Extensions;
-using Config.Client.Options;
+﻿using Config.Server.Configuration.HttpClient;
+using Config.Server.Configuration.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Refit;
 
-namespace Config.Client.Extensions;
+namespace Config.Server.Configuration.Extensions;
 
 public static class ServiceCollectionExtensions
 {
@@ -16,8 +16,12 @@ public static class ServiceCollectionExtensions
         var providerOptions = new ProviderOptions();
         action(providerOptions);
 
-        services.AddApiClient(new Uri(providerOptions.Url));
         services.AddOptions();
+
+        services
+            .AddRefitClient<IConfigApiClient>()
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri(providerOptions.Url));
+
         services.AddSingleton(provider =>
         {
             ConfigServerConfigurationProvider configProvider = new(

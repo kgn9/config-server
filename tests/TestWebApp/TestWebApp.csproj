@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\clients\Config.Client\Config.Client.csproj" />
+      <PackageReference Include="Config.Server.Configuration" />
     </ItemGroup>
 
 </Project>

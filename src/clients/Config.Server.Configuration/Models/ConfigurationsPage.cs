@@ -1,3 +1,3 @@
-﻿namespace Config.Client.Http.Models;
+﻿namespace Config.Server.Configuration.Models;
 
 public record ConfigurationsPage(IEnumerable<ConfigurationItem> Items);
