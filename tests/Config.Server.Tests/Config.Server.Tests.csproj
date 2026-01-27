@@ -23,11 +23,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Server\Application\Config.Server.Application.Abstractions\Config.Server.Application.Abstractions.csproj" />
-      <ProjectReference Include="..\..\src\Server\Application\Config.Server.Application.Contracts\Config.Server.Application.Contracts.csproj" />
-      <ProjectReference Include="..\..\src\Server\Application\Config.Server.Application.Models\Config.Server.Application.Models.csproj" />
-      <ProjectReference Include="..\..\src\Server\Application\Config.Server.Application\Config.Server.Application.csproj" />
-      <ProjectReference Include="..\..\src\Server\Infrastructure\Config.Server.Infrastructure.Persistence\Config.Server.Infrastructure.Persistence.csproj" />
+      <ProjectReference Include="..\..\src\server\Application\Config.Server.Application.Abstractions\Config.Server.Application.Abstractions.csproj" />
+      <ProjectReference Include="..\..\src\server\Application\Config.Server.Application.Contracts\Config.Server.Application.Contracts.csproj" />
+      <ProjectReference Include="..\..\src\server\Application\Config.Server.Application.Models\Config.Server.Application.Models.csproj" />
+      <ProjectReference Include="..\..\src\server\Application\Config.Server.Application\Config.Server.Application.csproj" />
+      <ProjectReference Include="..\..\src\server\Infrastructure\Config.Server.Infrastructure.Persistence\Config.Server.Infrastructure.Persistence.csproj" />
     </ItemGroup>
 
 </Project>
