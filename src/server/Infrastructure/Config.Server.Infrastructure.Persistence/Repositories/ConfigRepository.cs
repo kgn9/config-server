@@ -29,7 +29,7 @@ public class ConfigRepository : IConfigRepository
         insert into configurations (key, value, namespace, profile, environment, created_at, updated_at, created_by)
         values (:key, :value, :namespace, :profile, :environment, :created_at, :updated_at, :created_by)
         on conflict on constraint unique_config_record do update
-            set value = excluded.value, updated_at = excluded.updated_at
+            set value = excluded.value, updated_at = excluded.updated_at, is_deleted = excluded.is_deleted
         returning id;
         """;
 

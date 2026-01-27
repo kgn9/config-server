@@ -29,7 +29,7 @@ internal class ConfigService : IConfigService
         GetConfig.Request request = new(configItem.Key, configItem.Namespace, configItem.Profile, configItem.Environment.First());
         GetConfig.Result result = await GetConfigByKeyAsync(request, cancellationToken);
 
-        if (result is GetConfig.Result.Success successResult)
+        if (result is GetConfig.Result.Success { ConfigItem.IsDeleted: false } successResult)
         {
             ConfigItem oldConfigItem = successResult.ConfigItem;
 
@@ -46,7 +46,7 @@ internal class ConfigService : IConfigService
 
             await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
         }
-        else if (result is GetConfig.Result.NotFound)
+        else
         {
             configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
 
