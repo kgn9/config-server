@@ -9,7 +9,7 @@ COPY . .
 
 RUN dotnet restore "Config.Server.slnx"
 
-WORKDIR "/src/server/server/Config.Server.Tools"
+WORKDIR /src/server/src/server/Api/Config.Server.Api.Http
 RUN dotnet build "Config.Server.Api.Http.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
