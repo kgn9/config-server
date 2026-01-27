@@ -4,7 +4,7 @@ using Config.Server.Infrastructure.Persistence.Options;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 
-builder.Services.Configure<ConnectionOptions>(builder.Configuration.GetSection("Infrastructure"));
+builder.Services.Configure<ConnectionOptions>(builder.Configuration);
 
 builder.Services.AddMigrations();
 builder.Services.AddInfrastructure();
