@@ -21,21 +21,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: Install dependencies
+      - name: install dependencies
         run: dotnet restore
         
-      - name: Build
+      - name: build
         run: dotnet build --configuration Release --no-restore
       
-      - name: Test
+      - name: test
         run: dotnet test --configuration Release --no-build --verbosity normal
 
   deploy:
@@ -47,17 +47,37 @@ jobs:
       packages: write
     
     steps:
-      - name: Checkout code
+      - name: checkout code
         uses: actions/checkout@v4
+        
+      - name: setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-      - name: Log in to the Container registry
+      - name: install dependencies
+        run: dotnet restore
+
+      - name: build
+        run: dotnet build --configuration Release --no-restore
+        
+      - name: pack
+        run: dotnet pack --configuration Release --no-build --output nupkg
+  
+      - name: add GitHub Packages source
+        run: dotnet nuget add source --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: push NuGet package
+        run: dotnet nuget push nupkg/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source github --skip-duplicate
+
+      - name: log in to the Container registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
+      - name: extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -67,7 +87,7 @@ jobs:
             type=sha,format=short
             latest
 
-      - name: Build and push Docker image
+      - name: build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .

@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Config.Server.Application.Abstractions\Config.Server.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\Config.Server.Application.Models\Config.Server.Application.Models.csproj" />
+  </ItemGroup>
+
+</Project>

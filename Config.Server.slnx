@@ -1,4 +1,22 @@
 <Solution>
     <Folder Name="/src/" />
-    <Folder Name="/tests/" />
+    <Folder Name="/src/clients/">
+        <Project Path="src/clients/Config.Server.Configuration/Config.Server.Configuration.csproj" />
+    </Folder>
+    <Folder Name="/src/server/" />
+    <Folder Name="/src/server/Api/">
+        <Project Path="src/server/Api/Config.Server.Api.Http/Config.Server.Api.Http.csproj" />
+    </Folder>
+    <Folder Name="/src/server/Application/">
+        <Project Path="src/server/Application/Config.Server.Application.Abstractions/Config.Server.Application.Abstractions.csproj" />
+        <Project Path="src/server/Application/Config.Server.Application.Contracts/Config.Server.Application.Contracts.csproj" />
+        <Project Path="src/server/Application/Config.Server.Application.Models/Config.Server.Application.Models.csproj" />
+        <Project Path="src/server/Application/Config.Server.Application/Config.Server.Application.csproj" />
+    </Folder>
+    <Folder Name="/src/server/Infrastructure/">
+        <Project Path="src/server/Infrastructure/Config.Server.Infrastructure.Persistence/Config.Server.Infrastructure.Persistence.csproj" />
+    </Folder>
+    <Folder Name="/tests/">
+        <Project Path="tests/Config.Server.Tests/Config.Server.Tests.csproj" />
+    </Folder>
 </Solution>
