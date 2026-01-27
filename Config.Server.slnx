@@ -5,7 +5,7 @@
     </Folder>
     <Folder Name="/src/server/" />
     <Folder Name="/src/server/Api/">
-        <Project Path="src/Server/Api/Config.Server.Api.Http/Config.Server.Api.Http.csproj" />
+        <Project Path="src/server/Api/Config.Server.Api.Http/Config.Server.Api.Http.csproj" />
     </Folder>
     <Folder Name="/src/server/Application/">
         <Project Path="src/server/Application/Config.Server.Application.Abstractions/Config.Server.Application.Abstractions.csproj" />
