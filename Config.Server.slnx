@@ -18,6 +18,5 @@
     </Folder>
     <Folder Name="/tests/">
         <Project Path="tests/Config.Server.Tests/Config.Server.Tests.csproj" />
-        <Project Path="tests/TestWebApp/TestWebApp.csproj" />
     </Folder>
 </Solution>
