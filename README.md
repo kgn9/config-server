@@ -46,8 +46,8 @@ Docker образ распространяется через GitHub Container R
 services:
     config-server:
         image: ghcr.io/kgn9/config-server:latest
-    environment:
-        CONNECTIONSTRING="PostgreSQL DB connection string"
+        environment:
+            CONNECTIONSTRING="PostgreSQL DB connection string"
 ```
 
 Требуется PostgreSQL для хранилища конфигураций.
