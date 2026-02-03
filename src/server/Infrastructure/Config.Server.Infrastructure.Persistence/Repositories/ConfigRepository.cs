@@ -67,8 +67,8 @@ public class ConfigRepository : IConfigRepository
         where
             id >= :cursor
             and (cardinality(:keys) = 0 or key = any(:keys))
-            and (:namespace is null or namespace like :namespace)
-            and (:profile is null or profile like :profile)
+            and (:namespace is null or namespace = :namespace)
+            and (:profile is null or profile = :profile)
             and (:environment is null or :environment = any(environment))
             and is_deleted = :is_deleted
         order by key

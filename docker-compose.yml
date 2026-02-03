@@ -12,9 +12,7 @@ services:
       - config-network
         
   server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/kgn9/config-server:latest
     ports: 
        - "5150:8080"
     environment:

@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IConfigRepository, ConfigRepository>();
         services.AddScoped<IConfigHistoryRepository, ConfigHistoryRepository>();
+        services.AddScoped<IIdentityRepository, IdentityRepository>();
 
         return services;
     }

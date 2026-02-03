@@ -4,6 +4,7 @@ using Config.Server.Application.Contracts.Operations;
 using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -21,6 +22,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}")]
+    [Authorize]
     public QueryConfigsResponseDto QueryConfigsAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -38,6 +40,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}/{key}")]
+    [Authorize]
     public async Task<ActionResult<ConfigItemResponseDto>> GetConfigByKeyAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -61,6 +64,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpPost("{project}/{profile}/{environment}/{key}")]
+    [Authorize]
     public async Task<IActionResult> SetConfigByKey(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -85,6 +89,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpPost("{project}/{profile}/{environment}")]
+    [Authorize]
     public async Task<IActionResult> SetConfigBatch(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -104,6 +109,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpDelete("{project}/{profile}/{environment}/{key}")]
+    [Authorize]
     public async Task<IActionResult> DeleteConfigAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -114,7 +120,7 @@ public class ConfigController : ControllerBase
         DeleteConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment), deletedBy);
         DeleteConfig.Result result = await _configService.DeleteConfigAsync(request, HttpContext.RequestAborted);
 
-        return result is DeleteConfig.Result.Success successResult ? Ok() : NotFound();
+        return result is DeleteConfig.Result.Success ? Ok() : NotFound();
     }
 
     private ConfigEnvironment StringToConfigEnvironment(string input)
