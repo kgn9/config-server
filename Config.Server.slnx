@@ -14,8 +14,8 @@
         <Project Path="src/server/Application/Config.Server.Application/Config.Server.Application.csproj" />
     </Folder>
     <Folder Name="/src/server/Infrastructure/">
-        <Project Path="src/server/Infrastructure/Config.Server.Infrastructure.Identity/Config.Server.Infrastructure.Identity.csproj" />
         <Project Path="src/server/Infrastructure/Config.Server.Infrastructure.Persistence/Config.Server.Infrastructure.Persistence.csproj" />
+        <Project Path="src/server/Infrastructure/Config.Server.Infrastructure.Security/Config.Server.Infrastructure.Security.csproj" />
     </Folder>
     <Folder Name="/tests/">
         <Project Path="tests/Config.Server.Tests/Config.Server.Tests.csproj" />

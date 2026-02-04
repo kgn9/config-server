@@ -1,13 +1,13 @@
 ﻿using Config.Server.Application.Abstractions.Identity;
-using Config.Server.Infrastructure.Identity.Options;
+using Config.Server.Infrastructure.Security.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace Config.Server.Infrastructure.Identity;
+namespace Config.Server.Infrastructure.Security;
 
-public class JwtGenerator : IJwtGenerator
+internal class JwtGenerator : IJwtGenerator
 {
     private readonly IOptions<JwtOptions> _jwtOptions;
     private readonly RsaSecurityKey _securityKey;
@@ -18,7 +18,7 @@ public class JwtGenerator : IJwtGenerator
         _securityKey = securityKey;
     }
 
-    public string GetAccessToken(Guid userId, IEnumerable<Claim> claims)
+    public string GetAccessToken(IEnumerable<Claim> claims)
     {
         var credentials = new SigningCredentials(_securityKey, SecurityAlgorithms.RsaSha256);
 

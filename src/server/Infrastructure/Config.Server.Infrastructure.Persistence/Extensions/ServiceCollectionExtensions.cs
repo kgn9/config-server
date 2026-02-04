@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
             var builder = new NpgsqlDataSourceBuilder(connection.ConnectionString);
             builder.MapEnum<ConfigEnvironment>(pgName: "config_environment");
             builder.MapEnum<ConfigHistoryKind>(pgName: "config_history_kind");
+            builder.MapEnum<ProjectRoles>(pgName: "project_roles");
 
             return builder.Build();
         });
@@ -32,6 +33,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IConfigRepository, ConfigRepository>();
         services.AddScoped<IConfigHistoryRepository, ConfigHistoryRepository>();
         services.AddScoped<IIdentityRepository, IdentityRepository>();
+        services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
 
         return services;
     }

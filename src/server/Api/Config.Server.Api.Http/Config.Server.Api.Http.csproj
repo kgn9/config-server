@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Config.Server.Application.Contracts\Config.Server.Application.Contracts.csproj" />
     <ProjectReference Include="..\..\Application\Config.Server.Application\Config.Server.Application.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\Config.Server.Infrastructure.Identity\Config.Server.Infrastructure.Identity.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Config.Server.Infrastructure.Security\Config.Server.Infrastructure.Security.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Config.Server.Infrastructure.Persistence\Config.Server.Infrastructure.Persistence.csproj" />
   </ItemGroup>
 

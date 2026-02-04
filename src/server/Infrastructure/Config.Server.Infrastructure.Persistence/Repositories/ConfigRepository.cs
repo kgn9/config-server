@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 
 namespace Config.Server.Infrastructure.Persistence.Repositories;
 
-public class ConfigRepository : IConfigRepository
+internal class ConfigRepository : IConfigRepository
 {
     private readonly NpgsqlDataSource _dataSource;
 

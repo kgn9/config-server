@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 
 namespace Config.Server.Infrastructure.Persistence.Repositories;
 
-public class IdentityRepository : IIdentityRepository
+internal class IdentityRepository : IIdentityRepository
 {
     private readonly NpgsqlDataSource _dataSource;
 

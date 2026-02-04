@@ -1,8 +1,8 @@
-﻿using FluentMigrator;
+﻿#pragma warning disable SA1649
+
+using FluentMigrator;
 using FluentMigrator.Expressions;
 using FluentMigrator.Infrastructure;
-
-#pragma warning disable SA1649
 
 namespace Config.Server.Infrastructure.Persistence.Migrations;
 

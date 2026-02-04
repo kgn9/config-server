@@ -6,6 +6,7 @@ using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Config.Server.Api.Http.Controllers;
@@ -22,7 +23,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}")]
-    [Authorize]
+    [Authorize(Policy = "CanRead")]
     public QueryConfigsResponseDto QueryConfigsAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -40,7 +41,7 @@ public class ConfigController : ControllerBase
     }
 
     [HttpGet("{project}/{profile}/{environment}/{key}")]
-    [Authorize]
+    [Authorize(Policy = "CanRead")]
     public async Task<ActionResult<ConfigItemResponseDto>> GetConfigByKeyAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
@@ -57,22 +58,23 @@ public class ConfigController : ControllerBase
                     successResult.ConfigItem.Key,
                     successResult.ConfigItem.Value));
         }
-        else
-        {
-            return NotFound();
-        }
+
+        return NotFound();
     }
 
     [HttpPost("{project}/{profile}/{environment}/{key}")]
-    [Authorize]
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> SetConfigByKey(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
         [FromRoute] string key,
-        [FromQuery] string value,
-        [FromQuery] string createdBy)
+        [FromQuery] string value)
     {
+        if (User.FindFirst(ClaimTypes.Name)?.Value is not { } createdBy)
+            return Unauthorized();
+
+        // TODO Move object creation to service layer
         ConfigItem item = new(
             Id: default,
             key,
@@ -89,40 +91,45 @@ public class ConfigController : ControllerBase
     }
 
     [HttpPost("{project}/{profile}/{environment}")]
-    [Authorize]
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> SetConfigBatch(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
-        [FromQuery] string creator,
         [FromBody] JsonElement configs)
     {
+        if (User.FindFirst(ClaimTypes.Name)?.Value is not { } createdBy)
+            return Unauthorized();
+
         SetConfigsBatch.Request request = new(
             configs,
             project,
             profile,
             StringToConfigEnvironment(environment),
-            creator);
+            createdBy);
         await _configService.SetConfigsBatchAsync(request, HttpContext.RequestAborted);
 
         return Ok();
     }
 
     [HttpDelete("{project}/{profile}/{environment}/{key}")]
-    [Authorize]
+    [Authorize(Policy = "CanDelete")]
     public async Task<IActionResult> DeleteConfigAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
-        [FromRoute] string key,
-        [FromQuery] string deletedBy)
+        [FromRoute] string key)
     {
+        if (User.FindFirst(ClaimTypes.Name)?.Value is not { } deletedBy)
+            return Unauthorized();
+
         DeleteConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment), deletedBy);
         DeleteConfig.Result result = await _configService.DeleteConfigAsync(request, HttpContext.RequestAborted);
 
         return result is DeleteConfig.Result.Success ? Ok() : NotFound();
     }
 
+    // TODO Move to service layer
     private ConfigEnvironment StringToConfigEnvironment(string input)
     {
         return input switch

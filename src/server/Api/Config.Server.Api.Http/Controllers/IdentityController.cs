@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Config.Server.Api.Http.Controllers;
 
+// TODO Add password change
 [ApiController]
 [Route("auth")]
 public class IdentityController : ControllerBase

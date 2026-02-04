@@ -1,6 +1,6 @@
 ﻿namespace Config.Server.Application.Utils;
 
-public class PageTokenSerializer
+public static class PageTokenSerializer
 {
     private const int GuidSize = 16;
 

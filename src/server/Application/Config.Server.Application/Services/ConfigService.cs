@@ -13,54 +13,58 @@ internal class ConfigService : IConfigService
 {
     private readonly IConfigRepository _configRepository;
     private readonly IConfigHistoryRepository _configHistoryRepository;
+    private readonly IProjectRepository _projectRepository;
 
     public ConfigService(
         IConfigRepository configRepository,
-        IConfigHistoryRepository configHistoryRepository)
+        IConfigHistoryRepository configHistoryRepository,
+        IProjectRepository projectRepository)
     {
         _configRepository = configRepository;
         _configHistoryRepository = configHistoryRepository;
+        _projectRepository = projectRepository;
     }
 
     public async Task SetConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
     {
         using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        // TODO Replace exception with result or make custom exception
+        if (await _projectRepository.GetProjectByNameAsync(configItem.Namespace, cancellationToken) is null)
+            throw new Exception($"Project {configItem.Namespace} not found");
+
         GetConfig.Request request = new(configItem.Key, configItem.Namespace, configItem.Profile, configItem.Environment.First());
         GetConfig.Result result = await GetConfigByKeyAsync(request, cancellationToken);
 
+        configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
+
+        HistoryItem historyItem = new(
+            Id: default,
+            configItem.Id,
+            Operation: ConfigHistoryKind.Created,
+            OldValue: string.Empty,
+            configItem.Value,
+            configItem.CreatedBy,
+            configItem.CreatedAt);
+
         if (result is GetConfig.Result.Success { ConfigItem.IsDeleted: false } successResult)
         {
-            ConfigItem oldConfigItem = successResult.ConfigItem;
-
-            configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
-
-            HistoryItem historyItem = new(
-                Id: default,
-                configItem.Id,
-                ConfigHistoryKind.Updated,
-                oldConfigItem.Value,
-                configItem.Value,
-                configItem.CreatedBy,
-                configItem.CreatedAt);
-
-            await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
+            historyItem = historyItem with
+            {
+                Operation = ConfigHistoryKind.Updated,
+                OldValue = successResult.ConfigItem.Value,
+            };
         }
         else
         {
-            configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
-
-            HistoryItem historyItem = new(
-                Id: default,
-                configItem.Id,
-                ConfigHistoryKind.Created,
-                "none",
-                configItem.Value,
-                configItem.CreatedBy,
-                configItem.CreatedAt);
-
-            await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
+            historyItem = historyItem with
+            {
+                Operation = ConfigHistoryKind.Created,
+                OldValue = "none",
+            };
         }
+
+        await _configHistoryRepository.AddRecordAsync(historyItem, cancellationToken);
 
         transaction.Complete();
     }
@@ -89,8 +93,8 @@ internal class ConfigService : IConfigService
     public async Task<GetConfig.Result> GetConfigByKeyAsync(GetConfig.Request request, CancellationToken cancellationToken)
     {
         ConfigQuery query = new([request.Key], request.Namespace, request.Profile, request.Environment, PageSize: 1);
-        ConfigItem[] configs = await _configRepository.QueryConfigsAsync(query, cancellationToken).ToArrayAsync(cancellationToken);
-        ConfigItem? configItem = configs.FirstOrDefault();
+        ConfigItem? configItem = await _configRepository
+            .QueryConfigsAsync(query, cancellationToken).FirstOrDefaultAsync(cancellationToken);
 
         return configItem is not null ? new GetConfig.Result.Success(configItem) : new GetConfig.Result.NotFound();
     }

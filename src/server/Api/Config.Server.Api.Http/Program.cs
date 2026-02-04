@@ -2,9 +2,9 @@
 
 using Config.Server.Api.Http.Extensions;
 using Config.Server.Application.Extensions;
-using Config.Server.Infrastructure.Identity.Extensions;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Config.Server.Infrastructure.Persistence.Options;
+using Config.Server.Infrastructure.Security.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
@@ -20,7 +20,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddJwtAuth();
-builder.Services.AddAuthorization();
+builder.Services.AddProjectRoleAuthorization();
 
 WebApplication app = builder.Build();
 

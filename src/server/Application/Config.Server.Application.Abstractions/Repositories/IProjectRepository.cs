@@ -1,0 +1,13 @@
+﻿using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Models.Entities;
+
+namespace Config.Server.Application.Abstractions.Repositories;
+
+public interface IProjectRepository
+{
+    Task<Project> CreateProjectAsync(Project project, CancellationToken cancellationToken);
+
+    Task<Project?> GetProjectByNameAsync(string name, CancellationToken cancellationToken);
+
+    IAsyncEnumerable<Project> QueryProjectsAsync(ProjectQuery query, CancellationToken cancellationToken);
+}

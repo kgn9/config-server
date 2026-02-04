@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
     

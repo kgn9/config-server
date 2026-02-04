@@ -15,12 +15,14 @@ public class ConfigServiceTests
     private readonly IConfigRepository _configRepository;
     private readonly IConfigHistoryRepository _configHistoryRepository;
     private readonly ConfigService _configService;
+    private readonly IProjectRepository _projectRepository;
 
     public ConfigServiceTests()
     {
-        _configRepository = NSubstitute.Substitute.For<IConfigRepository>();
-        _configHistoryRepository = NSubstitute.Substitute.For<IConfigHistoryRepository>();
-        _configService = new ConfigService(_configRepository, _configHistoryRepository);
+        _configRepository = Substitute.For<IConfigRepository>();
+        _configHistoryRepository = Substitute.For<IConfigHistoryRepository>();
+        _projectRepository = Substitute.For<IProjectRepository>();
+        _configService = new ConfigService(_configRepository, _configHistoryRepository, _projectRepository);
     }
 
     [Fact]
