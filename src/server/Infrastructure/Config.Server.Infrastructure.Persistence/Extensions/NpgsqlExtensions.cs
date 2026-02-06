@@ -1,9 +1,10 @@
-using Npgsql;
+﻿using Npgsql;
 using NpgsqlTypes;
+using System.Data;
 
 namespace Config.Server.Infrastructure.Persistence.Extensions;
 
-public static class NpgsqlCommandExtensions
+public static class NpgsqlExtensions
 {
     public static NpgsqlCommand AddParameter(
         this NpgsqlCommand command,
@@ -13,7 +14,7 @@ public static class NpgsqlCommandExtensions
         string? dataTypeName = null)
     {
         NpgsqlParameter parameter = command.Parameters.Add(
-            new NpgsqlParameter(name, value is null ? DBNull.Value : value));
+            new NpgsqlParameter(name, value ?? DBNull.Value));
 
         if (dbType is not null)
             parameter.NpgsqlDbType = dbType.Value;
@@ -22,5 +23,10 @@ public static class NpgsqlCommandExtensions
             parameter.DataTypeName = dataTypeName;
 
         return command;
+    }
+
+    public static string? GetNullableString(this NpgsqlDataReader reader, string columnName)
+    {
+        return reader.IsDBNull(reader.GetOrdinal(columnName)) ? null : reader.GetString(columnName);
     }
 }

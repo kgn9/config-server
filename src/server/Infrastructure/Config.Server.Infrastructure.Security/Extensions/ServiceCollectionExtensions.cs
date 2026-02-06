@@ -47,6 +47,9 @@ public static class ServiceCollectionExtensions
 
             options.AddPolicy("CanRead", policy =>
                 policy.Requirements.Add(new ProjectRoleRequirement(ProjectRoles.Reader)));
+
+            options.AddPolicy("CanAssignRoles", policy =>
+                policy.Requirements.Add(new ProjectRoleRequirement(ProjectRoles.Maintainer)));
         });
 
         return services;

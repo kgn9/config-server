@@ -29,7 +29,7 @@ public class ProjectController : ControllerBase
     }
 
     [HttpPost("{project}")]
-    [Authorize(Policy = "Maintainer")]
+    [Authorize(Policy = "CanAssignRoles")]
     public async Task<IActionResult> SetRoleToMemberAsync(
         [FromRoute] string project,
         [FromQuery] string username,
@@ -41,7 +41,7 @@ public class ProjectController : ControllerBase
     }
 
     [HttpDelete("{project}")]
-    [Authorize(Policy = "Maintainer")]
+    [Authorize(Policy = "CanAssignRoles")]
     public async Task<IActionResult> RevokeRoleFromMemberAsync(
         [FromRoute] string project,
         [FromQuery] string username)

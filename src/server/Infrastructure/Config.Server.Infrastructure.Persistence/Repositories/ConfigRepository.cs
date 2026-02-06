@@ -20,10 +20,7 @@ internal class ConfigRepository : IConfigRepository
 
     public async Task<ConfigItem> AddOrUpdateConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
     {
-        await using NpgsqlConnection connection = _dataSource.CreateConnection();
-
-        if (connection.State != ConnectionState.Open)
-            await connection.OpenAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
         const string sqlQuery = """
         insert into configurations (key, value, namespace, profile, environment, created_at, updated_at, created_by)

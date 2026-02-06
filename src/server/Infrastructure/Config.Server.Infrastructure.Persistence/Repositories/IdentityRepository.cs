@@ -39,12 +39,12 @@ internal class IdentityRepository : IIdentityRepository
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = sqlQuery;
         command
-            .AddParameter(":id", identity.Id)
-            .AddParameter(":username", identity.Username)
-            .AddParameter(":password", identity.Password)
-            .AddParameter(":email", identity.Email)
-            .AddParameter(":refresh_token", identity.RefreshToken)
-            .AddParameter(":created_at", identity.CreatedAt);
+            .AddParameter("id", identity.Id)
+            .AddParameter("username", identity.Username)
+            .AddParameter("password", identity.Password)
+            .AddParameter("email", identity.Email)
+            .AddParameter("refresh_token", identity.RefreshToken)
+            .AddParameter("created_at", identity.CreatedAt);
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);
@@ -76,13 +76,13 @@ internal class IdentityRepository : IIdentityRepository
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = sqlQuery;
         command
-            .AddParameter(":last_date", query.LastDate)
-            .AddParameter(":last_id", query.LastId)
-            .AddParameter(":ids", query.Ids)
-            .AddParameter(":username", query.Username, NpgsqlDbType.Text)
-            .AddParameter(":email", query.Email, NpgsqlDbType.Text)
-            .AddParameter(":refresh_token", query.RefreshToken, NpgsqlDbType.Text)
-            .AddParameter(":page_size", query.PageSize);
+            .AddParameter("last_date", query.LastDate)
+            .AddParameter("last_id", query.LastId)
+            .AddParameter("ids", query.Ids)
+            .AddParameter("username", query.Username, NpgsqlDbType.Text)
+            .AddParameter("email", query.Email, NpgsqlDbType.Text)
+            .AddParameter("refresh_token", query.RefreshToken, NpgsqlDbType.Text)
+            .AddParameter("page_size", query.PageSize);
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -93,7 +93,7 @@ internal class IdentityRepository : IIdentityRepository
                 reader.GetString("username"),
                 reader.GetString("password"),
                 reader.GetString("email"),
-                reader.IsDBNull(reader.GetOrdinal("refresh_token")) ? null : reader.GetString("refresh_token"),
+                reader.GetNullableString("refresh_token"),
                 reader.GetDateTime("created_at"));
         }
     }

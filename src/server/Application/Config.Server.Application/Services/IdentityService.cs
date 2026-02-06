@@ -5,6 +5,7 @@ using Config.Server.Application.Contracts.Operations.Identity;
 using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Utils;
+using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Transactions;
 
@@ -14,21 +15,25 @@ internal class IdentityService : IIdentityService
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly IJwtGenerator _jwtGenerator;
+    private readonly PasswordHasher<object?> _passwordHasher;
 
     public IdentityService(IIdentityRepository identityRepository, IJwtGenerator jwtGenerator)
     {
         _identityRepository = identityRepository;
         _jwtGenerator = jwtGenerator;
+        _passwordHasher = new PasswordHasher<object?>();
     }
 
-    public async Task<CreateIdentity.Result> CreateIdentityAsync(CreateIdentity.Request request, CancellationToken cancellationToken)
+    public async Task<CreateIdentity.Result> CreateIdentityAsync(
+        CreateIdentity.Request request,
+        CancellationToken cancellationToken)
     {
         using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         if (await GetUserByUsername(request.Username, cancellationToken) is not null)
             return new CreateIdentity.Result.IdentityAlreadyExists();
 
-        string hashedPassword = PasswordEncoder.Encode(request.Password);
+        string hashedPassword = _passwordHasher.HashPassword(null, request.Password);
 
         UserIdentity identity = new(
             Id: Guid.NewGuid(),
@@ -47,11 +52,13 @@ internal class IdentityService : IIdentityService
     public async Task ChangePasswordAsync(ChangePassword.Request request, CancellationToken cancellationToken)
     {
         UserIdentity identity = await GetUserById(request.UserId, cancellationToken);
-        string hashedPassword = PasswordEncoder.Encode(request.NewPassword);
+        string hashedPassword = _passwordHasher.HashPassword(null, request.NewPassword);
         await _identityRepository.AddOrUpdateIdentityAsync(identity with { Password = hashedPassword }, cancellationToken);
     }
 
-    public async Task<QueryIdentities.Result> QueryIdentitiesAsync(QueryIdentities.Request request, CancellationToken cancellationToken)
+    public async Task<QueryIdentities.Result> QueryIdentitiesAsync(
+        QueryIdentities.Request request,
+        CancellationToken cancellationToken)
     {
         IdentityQuery query = new(
             Ids: [],
@@ -68,24 +75,29 @@ internal class IdentityService : IIdentityService
         }
 
         IAsyncEnumerable<UserIdentity> identities = _identityRepository.QueryIdentitiesAsync(query, cancellationToken);
+
         UserIdentity lastItem = await identities.LastAsync(cancellationToken);
         string newPageToken = PageTokenSerializer.Serialize(lastItem.CreatedAt, lastItem.Id);
 
         return new QueryIdentities.Result.Success(identities, newPageToken);
     }
 
-    public async Task<CheckCredentials.Result> CheckCredentialsAsync(string username, string password, CancellationToken cancellationToken)
+    public async Task<CheckCredentials.Result> CheckCredentialsAsync(
+        string username,
+        string password,
+        CancellationToken cancellationToken)
     {
         UserIdentity? identity = await GetUserByUsername(username, cancellationToken);
 
-        string hashedPassword = PasswordEncoder.Encode(password);
-
         if (identity is null)
             return new CheckCredentials.Result.UsernameNotFound();
-        if (identity.Password != hashedPassword)
-            return new CheckCredentials.Result.PasswordMismatch();
 
-        return new CheckCredentials.Result.Success(identity.Id);
+        PasswordVerificationResult hashedPassword = _passwordHasher
+            .VerifyHashedPassword(null, identity.Password, password);
+
+        return hashedPassword is PasswordVerificationResult.Failed
+            ? new CheckCredentials.Result.PasswordMismatch()
+            : new CheckCredentials.Result.Success(identity.Id);
     }
 
     public async Task<CheckRefreshToken.Result> CheckRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)

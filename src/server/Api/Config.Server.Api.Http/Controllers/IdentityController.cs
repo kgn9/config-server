@@ -2,6 +2,7 @@
 using Config.Server.Api.Http.Options;
 using Config.Server.Application.Contracts.Operations.Identity;
 using Config.Server.Application.Contracts.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -22,7 +23,8 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterAsync([FromBody] IdentityDto dto)
+    [AllowAnonymous]
+    public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequestDto dto)
     {
         CreateIdentity.Request request = new(dto.Username, dto.Password, dto.Email);
         CreateIdentity.Result result = await _identityService.CreateIdentityAsync(request, HttpContext.RequestAborted);
@@ -36,11 +38,11 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginAsync(
-        [FromQuery] string username,
-        [FromQuery] string password)
+    [AllowAnonymous]
+    public async Task<IActionResult> LoginAsync([FromBody] LoginRequestDto request)
     {
-        CheckCredentials.Result result = await _identityService.CheckCredentialsAsync(username, password, HttpContext.RequestAborted);
+        CheckCredentials.Result result = await _identityService
+            .CheckCredentialsAsync(request.Username, request.Password, HttpContext.RequestAborted);
 
         switch (result)
         {
@@ -63,6 +65,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPost("refresh")]
+    [AllowAnonymous]
     public async Task<IActionResult> RefreshAsync()
     {
         if (!Request.Cookies.TryGetValue(_jwtAuthOptions.Value.RefreshTokenCookieName, out string? refreshToken))
