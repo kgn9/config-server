@@ -7,7 +7,5 @@ public interface IProjectRepository
 {
     Task<Project> CreateProjectAsync(Project project, CancellationToken cancellationToken);
 
-    Task<Project?> GetProjectByNameAsync(string name, CancellationToken cancellationToken);
-
     IAsyncEnumerable<Project> QueryProjectsAsync(ProjectQuery query, CancellationToken cancellationToken);
 }

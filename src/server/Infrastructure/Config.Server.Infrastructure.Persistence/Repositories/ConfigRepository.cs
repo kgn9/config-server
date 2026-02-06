@@ -101,42 +101,4 @@ internal class ConfigRepository : IConfigRepository
                 reader.GetString("created_by"));
         }
     }
-
-    // TODO Instead of this use AddOrUpdate to save object with IsDeleted = true
-    public async Task<long> DeleteConfigAsync(
-        string project,
-        string profile,
-        ConfigEnvironment environment,
-        string key,
-        CancellationToken cancellationToken)
-    {
-        await using NpgsqlConnection connection = _dataSource.CreateConnection();
-
-        if (connection.State != ConnectionState.Open)
-            await connection.OpenAsync(cancellationToken);
-
-        const string sqlQuery = """
-        update configurations
-        set is_deleted = true
-        where
-            key = :key
-            and namespace = :namespace
-            and profile = :profile
-            and :environment = any(environment)
-        returning id;
-        """;
-
-        await using NpgsqlCommand command = connection.CreateCommand();
-        command.CommandText = sqlQuery;
-        command
-            .AddParameter("key", key)
-            .AddParameter("namespace", project)
-            .AddParameter("profile", profile)
-            .AddParameter("environment", environment, dataTypeName: "config_environment");
-
-        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-        await reader.ReadAsync(cancellationToken);
-
-        return reader.GetInt64("id");
-    }
 }

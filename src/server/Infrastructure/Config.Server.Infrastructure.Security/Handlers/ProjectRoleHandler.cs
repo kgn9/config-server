@@ -17,6 +17,7 @@ public class ProjectRoleHandler : AuthorizationHandler<ProjectRoleRequirement>
     private readonly IIdentityRepository _identityRepository;
     private readonly IIdentityQueryBuilderFactory _identityQueryBuilderFactory;
     private readonly IProjectQueryBuilderFactory _projectQueryBuilderFactory;
+    private readonly IProjectMemberQueryBuilderFactory _projectMemberQueryBuilderFactory;
     private readonly IHttpContextAccessor _httpContext;
 
     public ProjectRoleHandler(
@@ -25,6 +26,7 @@ public class ProjectRoleHandler : AuthorizationHandler<ProjectRoleRequirement>
         IIdentityRepository identityRepository,
         IIdentityQueryBuilderFactory identityQueryBuilderFactory,
         IProjectQueryBuilderFactory projectQueryBuilderFactory,
+        IProjectMemberQueryBuilderFactory projectMemberQueryBuilderFactory,
         IHttpContextAccessor httpContext)
     {
         _projectRepository = projectRepository;
@@ -32,6 +34,7 @@ public class ProjectRoleHandler : AuthorizationHandler<ProjectRoleRequirement>
         _identityRepository = identityRepository;
         _identityQueryBuilderFactory = identityQueryBuilderFactory;
         _projectQueryBuilderFactory = projectQueryBuilderFactory;
+        _projectMemberQueryBuilderFactory = projectMemberQueryBuilderFactory;
         _httpContext = httpContext;
     }
 
@@ -60,8 +63,16 @@ public class ProjectRoleHandler : AuthorizationHandler<ProjectRoleRequirement>
         if (await _projectRepository.QueryProjectsAsync(projectQuery, httpContext.RequestAborted).FirstOrDefaultAsync() is not { } project)
             return;
 
+        IProjectMemberQueryBuilder projectMemberQueryBuilder = _projectMemberQueryBuilderFactory.Create();
+        ProjectMemberQuery projectMemberQuery = projectMemberQueryBuilder
+            .WithProjectId(project.Id)
+            .WithMemberId(identity.Id)
+            .Build();
+
         ProjectMember? member = await _projectMemberRepository
-            .GetMemberAsync(project.Id, identity.Id, httpContext.RequestAborted);
+            .QueryProjectMemberAsync(projectMemberQuery, httpContext.RequestAborted)
+            .FirstOrDefaultAsync(httpContext.RequestAborted);
+
         if (member is null) return;
 
         if (member.Role <= requirement.Role)

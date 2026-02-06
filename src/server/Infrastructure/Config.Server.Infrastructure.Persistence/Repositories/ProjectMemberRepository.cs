@@ -4,6 +4,7 @@ using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Npgsql;
+using NpgsqlTypes;
 using System.Data;
 using System.Runtime.CompilerServices;
 
@@ -44,39 +45,6 @@ internal class ProjectMemberRepository : IProjectMemberRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    // TODO Remove in favor of using QueryAsync
-    public async Task<ProjectMember?> GetMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
-    {
-        await using NpgsqlConnection connection = _dataSource.CreateConnection();
-
-        if (connection.State != ConnectionState.Open)
-            await connection.OpenAsync(cancellationToken);
-
-        const string sqlQuery = """
-        select * from project_members
-        where user_id = :user_id and project_id = :project_id;
-        """;
-
-        await using NpgsqlCommand command = connection.CreateCommand();
-        command.CommandText = sqlQuery;
-        command
-            .AddParameter(":user_id", userId)
-            .AddParameter(":project_id", projectId);
-
-        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (await reader.ReadAsync(cancellationToken))
-        {
-            return new ProjectMember(
-                reader.GetGuid("project_id"),
-                reader.GetGuid("user_id"),
-                reader.GetFieldValue<ProjectRoles>("role"),
-                reader.GetDateTime("created_at"));
-        }
-
-        return null;
-    }
-
     public async IAsyncEnumerable<ProjectMember> QueryProjectMemberAsync(
         ProjectMemberQuery query,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -101,7 +69,7 @@ internal class ProjectMemberRepository : IProjectMemberRepository
             .AddParameter("last_member_id", query.LastMemberId)
             .AddParameter("project_id", query.ProjectId)
             .AddParameter("user_id", query.MemberId)
-            .AddParameter("is_revoked", query.IsRevoked)
+            .AddParameter("is_revoked", query.IsRevoked, NpgsqlDbType.Boolean)
             .AddParameter("page_size", query.PageSize);
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);

@@ -45,37 +45,6 @@ internal class ProjectRepository : IProjectRepository
         return project with { Id = reader.GetGuid("id") };
     }
 
-    // TODO Remove in favor of using QueryAsync
-    public async Task<Project?> GetProjectByNameAsync(string name, CancellationToken cancellationToken)
-    {
-        await using NpgsqlConnection connection = _dataSource.CreateConnection();
-
-        if (connection.State != ConnectionState.Open)
-            await connection.OpenAsync(cancellationToken);
-
-        const string sqlQuery = """
-        select * from projects
-        where name = :name;
-        """;
-
-        await using NpgsqlCommand command = connection.CreateCommand();
-        command.CommandText = sqlQuery;
-        command.AddParameter("name", name);
-
-        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (await reader.ReadAsync(cancellationToken))
-        {
-            return new Project(
-                reader.GetGuid("id"),
-                reader.GetString("name"),
-                reader.GetGuid("owner_id"),
-                reader.GetDateTime("created_at"));
-        }
-
-        return null;
-    }
-
     // TODO Complete implementation
     public async IAsyncEnumerable<Project> QueryProjectsAsync(
         ProjectQuery query,

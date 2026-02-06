@@ -18,17 +18,20 @@ internal class ConfigService : IConfigService
     private readonly IConfigHistoryRepository _configHistoryRepository;
     private readonly IProjectRepository _projectRepository;
     private readonly IConfigQueryBuilderFactory _configQueryBuilderFactory;
+    private readonly IProjectQueryBuilderFactory _projectQueryBuilderFactory;
 
     public ConfigService(
         IConfigRepository configRepository,
         IConfigHistoryRepository configHistoryRepository,
         IProjectRepository projectRepository,
-        IConfigQueryBuilderFactory configQueryBuilderFactory)
+        IConfigQueryBuilderFactory configQueryBuilderFactory,
+        IProjectQueryBuilderFactory projectQueryBuilderFactory)
     {
         _configRepository = configRepository;
         _configHistoryRepository = configHistoryRepository;
         _projectRepository = projectRepository;
         _configQueryBuilderFactory = configQueryBuilderFactory;
+        _projectQueryBuilderFactory = projectQueryBuilderFactory;
     }
 
     public async Task SetConfigAsync(SetConfig.Request request, CancellationToken cancellationToken)
@@ -47,8 +50,10 @@ internal class ConfigService : IConfigService
             request.CreatedBy,
             IsDeleted: false);
 
-        // TODO Replace exception with result or make custom exception
-        if (await _projectRepository.GetProjectByNameAsync(configItem.Project, cancellationToken) is null)
+        IProjectQueryBuilder projectQueryBuilder = _projectQueryBuilderFactory.Create();
+        ProjectQuery query = projectQueryBuilder.WithName(configItem.Project).Build();
+
+        if (!await _projectRepository.QueryProjectsAsync(query, cancellationToken).AnyAsync(cancellationToken))
             throw new Exception($"Project {configItem.Project} not found");
 
         GetConfig.Request getRequest = new(

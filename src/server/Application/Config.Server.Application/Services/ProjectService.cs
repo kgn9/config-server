@@ -15,19 +15,22 @@ internal class ProjectService : IProjectService
     private readonly IIdentityRepository _identityRepository;
     private readonly IIdentityQueryBuilderFactory _identityQueryBuilderFactory;
     private readonly IProjectQueryBuilderFactory _projectQueryBuilderFactory;
+    private readonly IProjectMemberQueryBuilderFactory _projectMemberQueryBuilderFactory;
 
     public ProjectService(
         IProjectRepository projectRepository,
         IProjectMemberRepository projectMemberRepository,
         IIdentityRepository identityRepository,
         IIdentityQueryBuilderFactory identityQueryBuilderFactory,
-        IProjectQueryBuilderFactory projectQueryBuilderFactory)
+        IProjectQueryBuilderFactory projectQueryBuilderFactory,
+        IProjectMemberQueryBuilderFactory projectMemberQueryBuilderFactory)
     {
         _projectRepository = projectRepository;
         _projectMemberRepository = projectMemberRepository;
         _identityRepository = identityRepository;
         _identityQueryBuilderFactory = identityQueryBuilderFactory;
         _projectQueryBuilderFactory = projectQueryBuilderFactory;
+        _projectMemberQueryBuilderFactory = projectMemberQueryBuilderFactory;
     }
 
     public async Task CreateProject(string projectName, Guid ownerId, CancellationToken cancellationToken)
@@ -58,7 +61,8 @@ internal class ProjectService : IProjectService
         IIdentityQueryBuilder identityQueryBuilder = _identityQueryBuilderFactory.Create();
         IdentityQuery identityQuery = identityQueryBuilder.WithUsername(username).Build();
 
-        UserIdentity? identity = await _identityRepository.QueryIdentitiesAsync(identityQuery, cancellationToken).FirstOrDefaultAsync(cancellationToken);
+        UserIdentity? identity = await _identityRepository
+            .QueryIdentitiesAsync(identityQuery, cancellationToken).FirstOrDefaultAsync(cancellationToken);
 
         IProjectQueryBuilder projectQueryBuilder = _projectQueryBuilderFactory.Create();
         ProjectQuery projectQuery = projectQueryBuilder.WithName(projectName).Build();
@@ -81,7 +85,8 @@ internal class ProjectService : IProjectService
         IIdentityQueryBuilder identityQueryBuilder = _identityQueryBuilderFactory.Create();
         IdentityQuery identityQuery = identityQueryBuilder.WithUsername(username).Build();
 
-        UserIdentity? identity = await _identityRepository.QueryIdentitiesAsync(identityQuery, cancellationToken).FirstOrDefaultAsync(cancellationToken);
+        UserIdentity? identity = await _identityRepository
+            .QueryIdentitiesAsync(identityQuery, cancellationToken).FirstOrDefaultAsync(cancellationToken);
 
         IProjectQueryBuilder projectQueryBuilder = _projectQueryBuilderFactory.Create();
         ProjectQuery projectQuery = projectQueryBuilder.WithName(projectName).Build();
@@ -92,8 +97,18 @@ internal class ProjectService : IProjectService
         // TODO Change exception to result or make a custom exception
         if (identity is null || project is null) throw new Exception("User or project not found");
 
-        if (await _projectMemberRepository.GetMemberAsync(project.Id, identity.Id, cancellationToken) is not { } member)
-            throw new Exception($"Member {username} not found");
+        IProjectMemberQueryBuilder projectMemberQueryBuilder = _projectMemberQueryBuilderFactory.Create();
+        ProjectMemberQuery projectMemberQuery = projectMemberQueryBuilder
+            .WithProjectId(project.Id)
+            .WithMemberId(identity.Id)
+            .Build();
+
+        if (await _projectMemberRepository
+                .QueryProjectMemberAsync(projectMemberQuery, cancellationToken)
+                .FirstOrDefaultAsync(cancellationToken) is not { } member)
+        {
+            throw new Exception("Member not found");
+        }
 
         await _projectMemberRepository.AddOrUpdateMemberWithRoleAsync(member with { IsDeleted = true }, cancellationToken);
     }
