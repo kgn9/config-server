@@ -1,5 +1,7 @@
 ﻿using Config.Server.Application.Abstractions.Identity;
-using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Abstractions.Queries.Builders;
+using Config.Server.Application.Abstractions.Queries.Factories;
+using Config.Server.Application.Abstractions.Queries.Models;
 using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Contracts.Operations.Identity;
 using Config.Server.Application.Contracts.Services;
@@ -15,12 +17,14 @@ internal class IdentityService : IIdentityService
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly IJwtGenerator _jwtGenerator;
+    private readonly IIdentityQueryBuilderFactory _identityQueryBuilderFactory;
     private readonly PasswordHasher<object?> _passwordHasher;
 
-    public IdentityService(IIdentityRepository identityRepository, IJwtGenerator jwtGenerator)
+    public IdentityService(IIdentityRepository identityRepository, IJwtGenerator jwtGenerator, IIdentityQueryBuilderFactory identityQueryBuilderFactory)
     {
         _identityRepository = identityRepository;
         _jwtGenerator = jwtGenerator;
+        _identityQueryBuilderFactory = identityQueryBuilderFactory;
         _passwordHasher = new PasswordHasher<object?>();
     }
 
@@ -30,7 +34,10 @@ internal class IdentityService : IIdentityService
     {
         using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        if (await GetUserByUsername(request.Username, cancellationToken) is not null)
+        IIdentityQueryBuilder builder = _identityQueryBuilderFactory.Create();
+        IdentityQuery query = builder.WithUsername(request.Username).Build();
+
+        if (await _identityRepository.QueryIdentitiesAsync(query, cancellationToken).AnyAsync(cancellationToken))
             return new CreateIdentity.Result.IdentityAlreadyExists();
 
         string hashedPassword = _passwordHasher.HashPassword(null, request.Password);
@@ -49,25 +56,32 @@ internal class IdentityService : IIdentityService
         return new CreateIdentity.Result.Success(identity.Id);
     }
 
-    public async Task ChangePasswordAsync(ChangePassword.Request request, CancellationToken cancellationToken)
+    public async Task<ChangePassword.Result> ChangePasswordAsync(
+        ChangePassword.Request request,
+        CancellationToken cancellationToken)
     {
-        UserIdentity identity = await GetUserById(request.UserId, cancellationToken);
+        IIdentityQueryBuilder builder = _identityQueryBuilderFactory.Create();
+        IdentityQuery query = builder.WithIds([request.UserId]).Build();
+
+        UserIdentity? identity = await _identityRepository
+            .QueryIdentitiesAsync(query, cancellationToken).FirstOrDefaultAsync(cancellationToken);
+
+        if (identity is null)
+            return new ChangePassword.Result.NotFound();
+
         string hashedPassword = _passwordHasher.HashPassword(null, request.NewPassword);
         await _identityRepository.AddOrUpdateIdentityAsync(identity with { Password = hashedPassword }, cancellationToken);
+
+        return new ChangePassword.Result.Success();
     }
 
     public async Task<QueryIdentities.Result> QueryIdentitiesAsync(
         QueryIdentities.Request request,
         CancellationToken cancellationToken)
     {
-        IdentityQuery query = new(
-            Ids: [],
-            Username: null,
-            Email: null,
-            RefreshToken: null,
-            PageSize: request.PageSize,
-            LastDate: DateTime.MinValue,
-            LastId: Guid.Empty);
+        IIdentityQueryBuilder builder = _identityQueryBuilderFactory.Create();
+        IdentityQuery query = builder.WithPageSize(request.PageSize).Build();
+
         if (request.PageToken != null)
         {
             (DateTime lastDate, Guid lastId) = PageTokenSerializer.Deserialize(request.PageToken);
@@ -87,7 +101,11 @@ internal class IdentityService : IIdentityService
         string password,
         CancellationToken cancellationToken)
     {
-        UserIdentity? identity = await GetUserByUsername(username, cancellationToken);
+        IIdentityQueryBuilder builder = _identityQueryBuilderFactory.Create();
+        IdentityQuery query = builder.WithUsername(username).Build();
+
+        UserIdentity? identity = await _identityRepository
+            .QueryIdentitiesAsync(query, cancellationToken).FirstOrDefaultAsync(cancellationToken);
 
         if (identity is null)
             return new CheckCredentials.Result.UsernameNotFound();
@@ -102,17 +120,11 @@ internal class IdentityService : IIdentityService
 
     public async Task<CheckRefreshToken.Result> CheckRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
     {
-        IdentityQuery query = new(
-            Ids: [],
-            Username: null,
-            Email: null,
-            RefreshToken: refreshToken,
-            PageSize: 1,
-            LastDate: DateTime.MinValue,
-            LastId: Guid.Empty);
+        IIdentityQueryBuilder builder = _identityQueryBuilderFactory.Create();
+        IdentityQuery query = builder.WithRefreshToken(refreshToken).Build();
+
         UserIdentity? identity = await _identityRepository
-            .QueryIdentitiesAsync(query, cancellationToken)
-            .FirstOrDefaultAsync(cancellationToken);
+            .QueryIdentitiesAsync(query, cancellationToken).FirstOrDefaultAsync(cancellationToken);
 
         if (identity is null || identity.RefreshToken != refreshToken)
             return new CheckRefreshToken.Result.NotFound();
@@ -124,7 +136,14 @@ internal class IdentityService : IIdentityService
 
     public async Task<GetTokens.Result> GetTokensAsync(Guid userId, CancellationToken cancellationToken)
     {
-        UserIdentity identity = await GetUserById(userId, cancellationToken);
+        IIdentityQueryBuilder builder = _identityQueryBuilderFactory.Create();
+        IdentityQuery query = builder.WithIds([userId]).Build();
+
+        UserIdentity? identity = await _identityRepository
+            .QueryIdentitiesAsync(query, cancellationToken).FirstOrDefaultAsync(cancellationToken);
+
+        if (identity is null)
+            return new GetTokens.Result.NotFound();
 
         IEnumerable<Claim> claims =
         [
@@ -138,36 +157,6 @@ internal class IdentityService : IIdentityService
 
         await _identityRepository.AddOrUpdateIdentityAsync(identity with { RefreshToken = refreshToken }, cancellationToken);
 
-        return new GetTokens.Result(accessToken, refreshToken);
-    }
-
-    public async Task<UserIdentity?> GetUserByUsername(string username, CancellationToken cancellationToken)
-    {
-        IdentityQuery query = new(
-            Ids: [],
-            Username: username,
-            Email: null,
-            RefreshToken: null,
-            PageSize: 1,
-            LastDate: DateTime.MinValue,
-            LastId: Guid.Empty);
-
-        return await _identityRepository
-            .QueryIdentitiesAsync(query, cancellationToken)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
-    private async Task<UserIdentity> GetUserById(Guid userId, CancellationToken cancellationToken)
-    {
-        IdentityQuery query = new(
-            Ids: [userId],
-            Username: null,
-            Email: null,
-            RefreshToken: null,
-            PageSize: 1,
-            LastDate: DateTime.MinValue,
-            LastId: Guid.Empty);
-
-        return await _identityRepository.QueryIdentitiesAsync(query, cancellationToken).FirstAsync(cancellationToken);
+        return new GetTokens.Result.Success(accessToken, refreshToken);
     }
 }

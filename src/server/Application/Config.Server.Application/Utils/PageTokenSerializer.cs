@@ -12,6 +12,12 @@ public static class PageTokenSerializer
         return Convert.ToBase64String(tokenBytes.ToArray());
     }
 
+    public static string SerializeFromLong(long lastId)
+    {
+        List<byte> tokenBytes = BitConverter.GetBytes(lastId).ToList();
+        return Convert.ToBase64String(tokenBytes.ToArray());
+    }
+
     public static (DateTime LastDate, Guid LastId) Deserialize(string token)
     {
         byte[] data = Convert.FromBase64String(token);
@@ -23,5 +29,11 @@ public static class PageTokenSerializer
         Guid lastId = new(guidBytes);
 
         return (lastDate, lastId);
+    }
+
+    public static long DeserializeToLong(string token)
+    {
+        byte[] data = Convert.FromBase64String(token);
+        return BitConverter.ToInt64(data);
     }
 }

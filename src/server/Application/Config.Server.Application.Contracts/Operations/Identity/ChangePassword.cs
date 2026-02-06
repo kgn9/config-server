@@ -7,5 +7,7 @@ public static class ChangePassword
     public abstract record Result
     {
         public sealed record Success : Result;
+
+        public sealed record NotFound : Result;
     }
 }

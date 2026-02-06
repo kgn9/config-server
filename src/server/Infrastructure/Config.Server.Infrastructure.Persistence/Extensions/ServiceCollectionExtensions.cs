@@ -1,7 +1,9 @@
+using Config.Server.Application.Abstractions.Queries.Factories;
 using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Models.Enums;
 using Config.Server.Infrastructure.Persistence.Migrations;
 using Config.Server.Infrastructure.Persistence.Options;
+using Config.Server.Infrastructure.Persistence.Queries.Factories;
 using Config.Server.Infrastructure.Persistence.Repositories;
 using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +37,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIdentityRepository, IdentityRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
+
+        services.AddScoped<IConfigQueryBuilderFactory, ConfigQueryBuilderFactory>();
+        services.AddScoped<IHistoryQueryBuilderFactory, HistoryQueryBuilderFactory>();
+        services.AddScoped<IIdentityQueryBuilderFactory, IdentityQueryBuilderFactory>();
+        services.AddScoped<IProjectMemberQueryBuilderFactory, ProjectMemberQueryBuilderFactory>();
+        services.AddScoped<IProjectQueryBuilderFactory, ProjectQueryBuilderFactory>();
 
         return services;
     }

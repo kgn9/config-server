@@ -1,7 +1,6 @@
-﻿using Config.Server.Application.Models.Enums;
-using System.Text.Json;
+﻿using System.Text.Json;
 
-namespace Config.Server.Application.Contracts.Operations;
+namespace Config.Server.Application.Contracts.Operations.Config;
 
 public static class SetConfigsBatch
 {
@@ -9,6 +8,6 @@ public static class SetConfigsBatch
         JsonElement Configs,
         string Project,
         string Profile,
-        ConfigEnvironment Environment,
+        string Environment,
         string CreatedBy);
 }

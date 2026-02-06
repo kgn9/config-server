@@ -1,4 +1,4 @@
-﻿namespace Config.Server.Application.Abstractions.Queries;
+﻿namespace Config.Server.Application.Abstractions.Queries.Models;
 
 public record ProjectQuery(
     string? Name,

@@ -1,6 +1,6 @@
 using Config.Server.Application.Models.Enums;
 
-namespace Config.Server.Application.Abstractions.Queries;
+namespace Config.Server.Application.Abstractions.Queries.Models;
 
 public record class ConfigQuery(
     string[] Keys,
@@ -8,5 +8,5 @@ public record class ConfigQuery(
     string? Profile,
     ConfigEnvironment? Environment,
     int PageSize,
-    long Cursor = 0,
+    long LastId,
     bool IsDeleted = false);

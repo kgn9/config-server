@@ -1,6 +1,6 @@
 using Config.Server.Application.Models.Enums;
 
-namespace Config.Server.Application.Abstractions.Queries;
+namespace Config.Server.Application.Abstractions.Queries.Models;
 
 public record class HistoryQuery(
     long[] ConfigIds,

@@ -1,4 +1,4 @@
-using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Abstractions.Queries.Models;
 using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
@@ -30,14 +30,16 @@ internal class ConfigRepository : IConfigRepository
         returning id;
         """;
 
+        ConfigEnvironment[] env = [configItem.Environment];
+
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = sqlQuery;
         command
             .AddParameter("key", configItem.Key)
             .AddParameter("value", configItem.Value)
-            .AddParameter("namespace", configItem.Namespace)
+            .AddParameter("namespace", configItem.Project)
             .AddParameter("profile", configItem.Profile)
-            .AddParameter("environment", configItem.Environment)
+            .AddParameter("environment", env)
             .AddParameter("created_at", configItem.CreatedAt)
             .AddParameter("updated_at", configItem.UpdatedAt)
             .AddParameter("created_by", configItem.CreatedBy);
@@ -62,7 +64,7 @@ internal class ConfigRepository : IConfigRepository
             id, key, value, namespace, profile, environment, created_at, updated_at, created_by
         from configurations
         where
-            id >= :cursor
+            id > :cursor
             and (cardinality(:keys) = 0 or key = any(:keys))
             and (:namespace is null or namespace = :namespace)
             and (:profile is null or profile = :profile)
@@ -75,7 +77,7 @@ internal class ConfigRepository : IConfigRepository
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = sqlQuery;
         command
-            .AddParameter("cursor", query.Cursor)
+            .AddParameter("cursor", query.LastId)
             .AddParameter("page_size", query.PageSize)
             .AddParameter("keys", query.Keys)
             .AddParameter("namespace", query.Namespace)
@@ -93,13 +95,14 @@ internal class ConfigRepository : IConfigRepository
                 reader.GetString("value"),
                 reader.GetString("namespace"),
                 reader.GetString("profile"),
-                reader.GetFieldValue<ConfigEnvironment[]>("environment"),
+                reader.GetFieldValue<ConfigEnvironment[]>("environment").First(),
                 reader.GetDateTime("created_at"),
                 reader.GetDateTime("updated_at"),
                 reader.GetString("created_by"));
         }
     }
 
+    // TODO Instead of this use AddOrUpdate to save object with IsDeleted = true
     public async Task<long> DeleteConfigAsync(
         string project,
         string profile,

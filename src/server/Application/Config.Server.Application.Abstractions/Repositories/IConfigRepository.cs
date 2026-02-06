@@ -1,4 +1,4 @@
-using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Abstractions.Queries.Models;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
 

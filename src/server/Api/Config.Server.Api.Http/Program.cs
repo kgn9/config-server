@@ -65,6 +65,7 @@ app.MapControllers();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// await app.Services.MigrationsDown(1769757160);
 await app.Services.MigrationsUp();
 
 await app.RunAsync();

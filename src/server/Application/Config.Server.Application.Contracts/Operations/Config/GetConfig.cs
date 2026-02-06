@@ -1,11 +1,10 @@
 using Config.Server.Application.Models.Entities;
-using Config.Server.Application.Models.Enums;
 
-namespace Config.Server.Application.Contracts.Operations;
+namespace Config.Server.Application.Contracts.Operations.Config;
 
 public static class GetConfig
 {
-    public sealed record Request(string Key, string Namespace, string Profile, ConfigEnvironment Environment);
+    public sealed record Request(string Key, string Namespace, string Profile, string Environment);
 
     public abstract record Result
     {

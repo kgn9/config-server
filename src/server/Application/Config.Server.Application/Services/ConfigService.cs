@@ -1,9 +1,12 @@
-using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Abstractions.Queries.Builders;
+using Config.Server.Application.Abstractions.Queries.Factories;
+using Config.Server.Application.Abstractions.Queries.Models;
 using Config.Server.Application.Abstractions.Repositories;
-using Config.Server.Application.Contracts.Operations;
+using Config.Server.Application.Contracts.Operations.Config;
 using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
+using Config.Server.Application.Utils;
 using System.Text.Json;
 using System.Transactions;
 
@@ -14,27 +17,46 @@ internal class ConfigService : IConfigService
     private readonly IConfigRepository _configRepository;
     private readonly IConfigHistoryRepository _configHistoryRepository;
     private readonly IProjectRepository _projectRepository;
+    private readonly IConfigQueryBuilderFactory _configQueryBuilderFactory;
 
     public ConfigService(
         IConfigRepository configRepository,
         IConfigHistoryRepository configHistoryRepository,
-        IProjectRepository projectRepository)
+        IProjectRepository projectRepository,
+        IConfigQueryBuilderFactory configQueryBuilderFactory)
     {
         _configRepository = configRepository;
         _configHistoryRepository = configHistoryRepository;
         _projectRepository = projectRepository;
+        _configQueryBuilderFactory = configQueryBuilderFactory;
     }
 
-    public async Task SetConfigAsync(ConfigItem configItem, CancellationToken cancellationToken)
+    public async Task SetConfigAsync(SetConfig.Request request, CancellationToken cancellationToken)
     {
         using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        // TODO Replace exception with result or make custom exception
-        if (await _projectRepository.GetProjectByNameAsync(configItem.Namespace, cancellationToken) is null)
-            throw new Exception($"Project {configItem.Namespace} not found");
+        ConfigItem configItem = new(
+            Id: default,
+            request.Key,
+            request.Value,
+            request.Project,
+            request.Profile,
+            StringToConfigEnvironment(request.Environment),
+            DateTime.UtcNow,
+            DateTime.UtcNow,
+            request.CreatedBy,
+            IsDeleted: false);
 
-        GetConfig.Request request = new(configItem.Key, configItem.Namespace, configItem.Profile, configItem.Environment.First());
-        GetConfig.Result result = await GetConfigByKeyAsync(request, cancellationToken);
+        // TODO Replace exception with result or make custom exception
+        if (await _projectRepository.GetProjectByNameAsync(configItem.Project, cancellationToken) is null)
+            throw new Exception($"Project {configItem.Project} not found");
+
+        GetConfig.Request getRequest = new(
+            configItem.Key,
+            configItem.Project,
+            configItem.Profile,
+            configItem.Environment.ToString());
+        GetConfig.Result result = await GetConfigByKeyAsync(getRequest, cancellationToken);
 
         configItem = await _configRepository.AddOrUpdateConfigAsync(configItem, cancellationToken);
 
@@ -76,34 +98,57 @@ internal class ConfigService : IConfigService
 
         foreach (KeyValuePair<string, string> kv in flattenedJson)
         {
-            ConfigItem item = new(
-                Id: default,
-                kv.Key,
-                kv.Value,
+            SetConfig.Request setRequest = new(
                 request.Project,
                 request.Profile,
-                [request.Environment],
-                DateTime.Now,
-                DateTime.Now,
+                request.Environment,
+                kv.Value,
+                kv.Key,
                 request.CreatedBy);
-            await SetConfigAsync(item, cancellationToken);
+            await SetConfigAsync(setRequest, cancellationToken);
         }
     }
 
     public async Task<GetConfig.Result> GetConfigByKeyAsync(GetConfig.Request request, CancellationToken cancellationToken)
     {
-        ConfigQuery query = new([request.Key], request.Namespace, request.Profile, request.Environment, PageSize: 1);
+        IConfigQueryBuilder builder = _configQueryBuilderFactory.Create();
+        ConfigQuery query = builder
+            .WithKeys([request.Key])
+            .WithProject(request.Namespace)
+            .WithProfile(request.Profile)
+            .WithEnvironment(StringToConfigEnvironment(request.Environment))
+            .Build();
+
         ConfigItem? configItem = await _configRepository
             .QueryConfigsAsync(query, cancellationToken).FirstOrDefaultAsync(cancellationToken);
 
         return configItem is not null ? new GetConfig.Result.Success(configItem) : new GetConfig.Result.NotFound();
     }
 
-    public IAsyncEnumerable<ConfigItem> QueryConfigsAsync(
-        ConfigQuery query,
+    public async Task<QueryConfigs.Result> QueryConfigsAsync(
+        QueryConfigs.Request request,
         CancellationToken cancellationToken)
     {
-        return _configRepository.QueryConfigsAsync(query, cancellationToken);
+        IConfigQueryBuilder builder = _configQueryBuilderFactory.Create();
+        ConfigQuery query = builder
+            .WithProject(request.Project)
+            .WithProfile(request.Profile)
+            .WithEnvironment(StringToConfigEnvironment(request.Environment))
+            .WithPageSize(request.PageSize)
+            .Build();
+
+        if (request.PageToken != null)
+        {
+            long lastId = PageTokenSerializer.DeserializeToLong(request.PageToken);
+            query = query with { LastId = lastId };
+        }
+
+        IAsyncEnumerable<ConfigItem> items = _configRepository.QueryConfigsAsync(query, cancellationToken);
+
+        ConfigItem lastItem = await items.LastAsync(cancellationToken);
+        string newPageToken = PageTokenSerializer.SerializeFromLong(lastItem.Id);
+
+        return new QueryConfigs.Result.Success(items, newPageToken);
     }
 
     public async Task<DeleteConfig.Result> DeleteConfigAsync(DeleteConfig.Request request, CancellationToken cancellationToken)
@@ -117,16 +162,13 @@ internal class ConfigService : IConfigService
         {
             case GetConfig.Result.Success successResult:
             {
-                long configId = await _configRepository.DeleteConfigAsync(
-                    request.Namespace,
-                    request.Profile,
-                    request.Environment,
-                    request.Key,
+                await _configRepository.AddOrUpdateConfigAsync(
+                    successResult.ConfigItem with { IsDeleted = true },
                     cancellationToken);
 
                 HistoryItem historyItem = new(
                     Id: default,
-                    configId,
+                    successResult.ConfigItem.Id,
                     ConfigHistoryKind.Deleted,
                     successResult.ConfigItem.Value,
                     "none",
@@ -174,5 +216,16 @@ internal class ConfigService : IConfigService
                 result[prefix] = element.ToString();
                 break;
         }
+    }
+
+    private ConfigEnvironment StringToConfigEnvironment(string input)
+    {
+        return input switch
+        {
+            "dev" => ConfigEnvironment.Dev,
+            "stage" => ConfigEnvironment.Stage,
+            "prod" => ConfigEnvironment.Prod,
+            _ => ConfigEnvironment.Global,
+        };
     }
 }

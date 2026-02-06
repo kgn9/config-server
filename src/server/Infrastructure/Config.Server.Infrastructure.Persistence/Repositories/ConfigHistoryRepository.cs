@@ -1,4 +1,4 @@
-using Config.Server.Application.Abstractions.Queries;
+using Config.Server.Application.Abstractions.Queries.Models;
 using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
@@ -43,6 +43,7 @@ public class ConfigHistoryRepository : IConfigHistoryRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    // TODO Add endpoint for this to API
     public async IAsyncEnumerable<HistoryItem> QueryRecordsAsync(
         HistoryQuery query,
         [EnumeratorCancellation] CancellationToken cancellationToken)

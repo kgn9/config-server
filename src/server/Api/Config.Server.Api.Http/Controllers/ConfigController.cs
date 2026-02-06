@@ -1,9 +1,6 @@
 using Config.Server.Api.Http.Models;
-using Config.Server.Application.Abstractions.Queries;
-using Config.Server.Application.Contracts.Operations;
+using Config.Server.Application.Contracts.Operations.Config;
 using Config.Server.Application.Contracts.Services;
-using Config.Server.Application.Models.Entities;
-using Config.Server.Application.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -24,20 +21,24 @@ public class ConfigController : ControllerBase
 
     [HttpGet("{project}/{profile}/{environment}")]
     [Authorize(Policy = "CanRead")]
-    public QueryConfigsResponseDto QueryConfigsAsync(
+    public async Task<ActionResult<QueryConfigsResponseDto>> QueryConfigsAsync(
         [FromRoute] string project,
         [FromRoute] string profile,
         [FromRoute] string environment,
-        [FromQuery] int pageSize = 50,
-        [FromQuery] int cursor = 0)
+        [FromQuery] int pageSize,
+        [FromQuery] string? pageToken)
     {
-        ConfigEnvironment? env = StringToConfigEnvironment(environment);
-        ConfigQuery query = new([], project, profile, env, pageSize, cursor);
-        IAsyncEnumerable<ConfigItem> config = _configService.QueryConfigsAsync(query, HttpContext.RequestAborted);
+        QueryConfigs.Request request = new(project, profile, environment, pageSize, pageToken);
+        QueryConfigs.Result result = await _configService.QueryConfigsAsync(request, HttpContext.RequestAborted);
 
-        IAsyncEnumerable<ConfigItemResponseDto> dtos = config.Select(x => new ConfigItemResponseDto(x.Key, x.Value));
+        if (result is QueryConfigs.Result.Success successResult)
+        {
+            return Ok(new QueryConfigsResponseDto(
+                successResult.Items.Select(x => new ConfigItemResponseDto(x.Key, x.Value)),
+                successResult.PageToken));
+        }
 
-        return new QueryConfigsResponseDto(dtos);
+        return NotFound();
     }
 
     [HttpGet("{project}/{profile}/{environment}/{key}")]
@@ -48,7 +49,7 @@ public class ConfigController : ControllerBase
         [FromRoute] string environment,
         [FromRoute] string key)
     {
-        GetConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment));
+        GetConfig.Request request = new(key, project, profile, environment);
         GetConfig.Result result = await _configService.GetConfigByKeyAsync(request, HttpContext.RequestAborted);
 
         if (result is GetConfig.Result.Success successResult)
@@ -74,18 +75,8 @@ public class ConfigController : ControllerBase
         if (User.FindFirst(ClaimTypes.Name)?.Value is not { } createdBy)
             return Unauthorized();
 
-        // TODO Move object creation to service layer
-        ConfigItem item = new(
-            Id: default,
-            key,
-            value,
-            project,
-            profile,
-            [StringToConfigEnvironment(environment)],
-            DateTime.Now,
-            DateTime.Now,
-            createdBy);
-        await _configService.SetConfigAsync(item, HttpContext.RequestAborted);
+        SetConfig.Request request = new(project, profile, environment, value, key, createdBy);
+        await _configService.SetConfigAsync(request, HttpContext.RequestAborted);
 
         return Ok();
     }
@@ -105,7 +96,7 @@ public class ConfigController : ControllerBase
             configs,
             project,
             profile,
-            StringToConfigEnvironment(environment),
+            environment,
             createdBy);
         await _configService.SetConfigsBatchAsync(request, HttpContext.RequestAborted);
 
@@ -123,21 +114,9 @@ public class ConfigController : ControllerBase
         if (User.FindFirst(ClaimTypes.Name)?.Value is not { } deletedBy)
             return Unauthorized();
 
-        DeleteConfig.Request request = new(key, project, profile, StringToConfigEnvironment(environment), deletedBy);
+        DeleteConfig.Request request = new(key, project, profile, environment, deletedBy);
         DeleteConfig.Result result = await _configService.DeleteConfigAsync(request, HttpContext.RequestAborted);
 
         return result is DeleteConfig.Result.Success ? Ok() : NotFound();
-    }
-
-    // TODO Move to service layer
-    private ConfigEnvironment StringToConfigEnvironment(string input)
-    {
-        return input switch
-        {
-            "dev" => ConfigEnvironment.Dev,
-            "stage" => ConfigEnvironment.Stage,
-            "prod" => ConfigEnvironment.Prod,
-            _ => ConfigEnvironment.Global,
-        };
     }
 }

@@ -1,8 +1,9 @@
-﻿using Config.Server.Application.Abstractions.Queries;
+﻿using Config.Server.Application.Abstractions.Queries.Models;
 using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Npgsql;
+using NpgsqlTypes;
 using System.Data;
 using System.Runtime.CompilerServices;
 
@@ -44,6 +45,7 @@ internal class ProjectRepository : IProjectRepository
         return project with { Id = reader.GetGuid("id") };
     }
 
+    // TODO Remove in favor of using QueryAsync
     public async Task<Project?> GetProjectByNameAsync(string name, CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = _dataSource.CreateConnection();
@@ -74,6 +76,7 @@ internal class ProjectRepository : IProjectRepository
         return null;
     }
 
+    // TODO Complete implementation
     public async IAsyncEnumerable<Project> QueryProjectsAsync(
         ProjectQuery query,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -95,8 +98,8 @@ internal class ProjectRepository : IProjectRepository
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = sqlQuery;
         command
-            .AddParameter("name", query.Name)
-            .AddParameter("owner_id", query.OwnerId)
+            .AddParameter("name", query.Name, NpgsqlDbType.Text)
+            .AddParameter("owner_id", query.OwnerId, NpgsqlDbType.Uuid)
             .AddParameter("page_size", query.PageSize);
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);

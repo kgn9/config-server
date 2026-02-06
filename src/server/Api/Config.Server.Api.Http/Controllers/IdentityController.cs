@@ -44,24 +44,17 @@ public class IdentityController : ControllerBase
         CheckCredentials.Result result = await _identityService
             .CheckCredentialsAsync(request.Username, request.Password, HttpContext.RequestAborted);
 
-        switch (result)
+        return result switch
         {
-            case CheckCredentials.Result.Success successResult:
-            {
-                await AddTokensAsync(successResult.Id, HttpContext.RequestAborted);
-
-                return Ok();
-            }
-
-            case CheckCredentials.Result.UsernameNotFound:
-                return Unauthorized("Username not found");
-
-            case CheckCredentials.Result.PasswordMismatch:
-                return Unauthorized("Password mismatch");
-
-            default:
-                return Unauthorized();
-        }
+            CheckCredentials.Result.Success successResult => await AddTokensAsync(
+                successResult.Id,
+                HttpContext.RequestAborted)
+                ? Ok()
+                : NotFound(),
+            CheckCredentials.Result.UsernameNotFound => Unauthorized("Username not found"),
+            CheckCredentials.Result.PasswordMismatch => Unauthorized("Password mismatch"),
+            _ => Unauthorized(),
+        };
     }
 
     [HttpPost("refresh")]
@@ -77,9 +70,7 @@ public class IdentityController : ControllerBase
         {
             case CheckRefreshToken.Result.Success successResult:
             {
-                await AddTokensAsync(successResult.Id, HttpContext.RequestAborted);
-
-                return Ok();
+                return await AddTokensAsync(successResult.Id, HttpContext.RequestAborted) ? Ok() : NotFound();
             }
 
             case CheckRefreshToken.Result.TokenHasExpired:
@@ -93,9 +84,12 @@ public class IdentityController : ControllerBase
         }
     }
 
-    private async Task AddTokensAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<bool> AddTokensAsync(Guid userId, CancellationToken cancellationToken)
     {
-        GetTokens.Result tokens = await _identityService.GetTokensAsync(userId, cancellationToken);
+        GetTokens.Result result = await _identityService.GetTokensAsync(userId, cancellationToken);
+
+        if (result is not GetTokens.Result.Success tokens)
+            return false;
 
         var cookieOptions = new CookieOptions
         {
@@ -116,5 +110,7 @@ public class IdentityController : ControllerBase
             _jwtAuthOptions.Value.RefreshTokenCookieName,
             tokens.RefreshToken,
             cookieOptions);
+
+        return true;
     }
 }

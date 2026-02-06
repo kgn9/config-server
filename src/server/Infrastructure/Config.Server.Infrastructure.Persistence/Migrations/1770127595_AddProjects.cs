@@ -19,7 +19,7 @@ public class AddProjects : IMigration, IMigrationAssemblyMarker
                 id         uuid primary key,
                 
                 name       text unique not null,
-                owner_id   uuid unique not null,
+                owner_id   uuid not null,
                 
                 created_at timestamp with time zone not null
             );
@@ -34,6 +34,8 @@ public class AddProjects : IMigration, IMigrationAssemblyMarker
                 role         project_roles not null,
                 
                 is_revoked   bool not null,
+                
+                created_at timestamp with time zone not null,
                 
                 constraint unique_project_member_pair
                     unique (project_id, user_id)

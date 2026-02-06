@@ -2,5 +2,10 @@
 
 public static class GetTokens
 {
-    public sealed record Result(string AccessToken, string RefreshToken);
+    public abstract record Result
+    {
+        public sealed record Success(string AccessToken, string RefreshToken) : Result;
+
+        public sealed record NotFound : Result;
+    }
 }

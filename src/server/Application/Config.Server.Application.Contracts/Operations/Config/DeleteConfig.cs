@@ -1,6 +1,4 @@
-using Config.Server.Application.Models.Enums;
-
-namespace Config.Server.Application.Contracts.Operations;
+namespace Config.Server.Application.Contracts.Operations.Config;
 
 public static class DeleteConfig
 {
@@ -8,7 +6,7 @@ public static class DeleteConfig
         string Key,
         string Namespace,
         string Profile,
-        ConfigEnvironment Environment,
+        string Environment,
         string DeletedBy);
 
     public abstract record Result
