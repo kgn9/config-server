@@ -5,12 +5,17 @@ using Config.Server.Application.Extensions;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Config.Server.Infrastructure.Persistence.Options;
 using Config.Server.Infrastructure.Security.Extensions;
+using Config.Server.Infrastructure.Security.Options;
 using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 
 builder.Services.Configure<ConnectionOptions>(builder.Configuration);
+builder.Services.Configure<CachingOptions>(builder.Configuration);
+builder.Services.Configure<ApiKeyOptions>(builder.Configuration);
 
+builder.Services.AddOptions();
+builder.Services.AddMemoryCache();
 builder.Services.AddMigrations();
 builder.Services.AddInfrastructure();
 builder.Services.AddRsaKey();
@@ -21,6 +26,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddJwtAuth();
 builder.Services.AddProjectRoleAuthorization();
+builder.Services.AddApiKeyAuthentication();
 
 WebApplication app = builder.Build();
 
@@ -65,7 +71,7 @@ app.MapControllers();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// await app.Services.MigrationsDown(1769757160);
+// await app.Services.MigrationsDown(1770127595);
 await app.Services.MigrationsUp();
 
 await app.RunAsync();

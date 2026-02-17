@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace Config.Server.Infrastructure.Security;
+namespace Config.Server.Infrastructure.Security.Generators;
 
 internal class JwtGenerator : IJwtGenerator
 {

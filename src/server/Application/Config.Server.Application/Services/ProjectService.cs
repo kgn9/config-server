@@ -5,6 +5,7 @@ using Config.Server.Application.Abstractions.Repositories;
 using Config.Server.Application.Contracts.Services;
 using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Config.Server.Application.Services;
 
@@ -16,6 +17,7 @@ internal class ProjectService : IProjectService
     private readonly IIdentityQueryBuilderFactory _identityQueryBuilderFactory;
     private readonly IProjectQueryBuilderFactory _projectQueryBuilderFactory;
     private readonly IProjectMemberQueryBuilderFactory _projectMemberQueryBuilderFactory;
+    private readonly IMemoryCache _memoryCache;
 
     public ProjectService(
         IProjectRepository projectRepository,
@@ -23,7 +25,8 @@ internal class ProjectService : IProjectService
         IIdentityRepository identityRepository,
         IIdentityQueryBuilderFactory identityQueryBuilderFactory,
         IProjectQueryBuilderFactory projectQueryBuilderFactory,
-        IProjectMemberQueryBuilderFactory projectMemberQueryBuilderFactory)
+        IProjectMemberQueryBuilderFactory projectMemberQueryBuilderFactory,
+        IMemoryCache memoryCache)
     {
         _projectRepository = projectRepository;
         _projectMemberRepository = projectMemberRepository;
@@ -31,6 +34,7 @@ internal class ProjectService : IProjectService
         _identityQueryBuilderFactory = identityQueryBuilderFactory;
         _projectQueryBuilderFactory = projectQueryBuilderFactory;
         _projectMemberQueryBuilderFactory = projectMemberQueryBuilderFactory;
+        _memoryCache = memoryCache;
     }
 
     public async Task CreateProject(string projectName, Guid ownerId, CancellationToken cancellationToken)
@@ -42,6 +46,7 @@ internal class ProjectService : IProjectService
         await _projectMemberRepository.AddOrUpdateMemberWithRoleAsync(member, cancellationToken);
     }
 
+    // TODO Remove
     public async Task SetRoleToMember(
         Guid projectId,
         Guid userId,
@@ -72,6 +77,8 @@ internal class ProjectService : IProjectService
 
         // TODO Change exception to result or make a custom exception
         if (identity is null || project is null) throw new Exception("User or project not found");
+
+        _memoryCache.Remove($"auth_{identity.Id}_{projectName}");
 
         ProjectMember member = new(project.Id, identity.Id, StringToProjectRolesMapper(role), DateTime.UtcNow);
         await _projectMemberRepository.AddOrUpdateMemberWithRoleAsync(member, cancellationToken);
@@ -111,6 +118,23 @@ internal class ProjectService : IProjectService
         }
 
         await _projectMemberRepository.AddOrUpdateMemberWithRoleAsync(member with { IsDeleted = true }, cancellationToken);
+    }
+
+    public async Task<IAsyncEnumerable<Project>> GetUserProjectsAsync(string username, CancellationToken cancellationToken)
+    {
+        IIdentityQueryBuilder identityQueryBuilder = _identityQueryBuilderFactory.Create();
+        IdentityQuery identityQuery = identityQueryBuilder.WithUsername(username).Build();
+
+        UserIdentity? identity = await _identityRepository
+            .QueryIdentitiesAsync(identityQuery, cancellationToken).FirstOrDefaultAsync(cancellationToken);
+
+        if (identity is null)
+            return AsyncEnumerable.Empty<Project>();
+
+        IProjectQueryBuilder projectQueryBuilder = _projectQueryBuilderFactory.Create();
+        ProjectQuery projectQuery = projectQueryBuilder.WithOwnerId(identity.Id).Build();
+
+        return _projectRepository.QueryProjectsAsync(projectQuery, cancellationToken);
     }
 
     private static ProjectRoles StringToProjectRolesMapper(string role)

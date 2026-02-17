@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IConfigService, ConfigService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IApiKeyService, ApiKeyService>();
 
         return services;
     }

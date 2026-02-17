@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIdentityRepository, IdentityRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
+        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
 
         services.AddScoped<IConfigQueryBuilderFactory, ConfigQueryBuilderFactory>();
         services.AddScoped<IHistoryQueryBuilderFactory, HistoryQueryBuilderFactory>();

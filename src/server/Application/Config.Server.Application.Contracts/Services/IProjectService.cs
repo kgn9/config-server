@@ -1,4 +1,5 @@
-﻿using Config.Server.Application.Models.Enums;
+﻿using Config.Server.Application.Models.Entities;
+using Config.Server.Application.Models.Enums;
 
 namespace Config.Server.Application.Contracts.Services;
 
@@ -22,4 +23,6 @@ public interface IProjectService
         string projectName,
         string username,
         CancellationToken cancellationToken);
+
+    Task<IAsyncEnumerable<Project>> GetUserProjectsAsync(string username, CancellationToken cancellationToken);
 }

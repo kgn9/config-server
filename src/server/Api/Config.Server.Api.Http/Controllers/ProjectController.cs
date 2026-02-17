@@ -1,4 +1,6 @@
-﻿using Config.Server.Application.Contracts.Services;
+﻿using Config.Server.Api.Http.Models;
+using Config.Server.Application.Contracts.Services;
+using Config.Server.Application.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -28,11 +30,11 @@ public class ProjectController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("{project}")]
+    [HttpPost("{project}/members/{username}/role")]
     [Authorize(Policy = "CanAssignRoles")]
     public async Task<IActionResult> SetRoleToMemberAsync(
         [FromRoute] string project,
-        [FromQuery] string username,
+        [FromRoute] string username,
         [FromQuery] string role)
     {
         await _projectService.SetRoleToMember(project, username, role, HttpContext.RequestAborted);
@@ -40,14 +42,22 @@ public class ProjectController : ControllerBase
         return Ok();
     }
 
-    [HttpDelete("{project}")]
+    [HttpDelete("{project}/members/{username}/role")]
     [Authorize(Policy = "CanAssignRoles")]
     public async Task<IActionResult> RevokeRoleFromMemberAsync(
         [FromRoute] string project,
-        [FromQuery] string username)
+        [FromRoute] string username)
     {
         await _projectService.RevokeRoleFromMemberAsync(project, username, HttpContext.RequestAborted);
 
         return Ok();
+    }
+
+    [HttpGet("{username}")]
+    public async Task<ActionResult<IAsyncEnumerable<ProjectDto>>> GetUserProjectsAsync([FromRoute] string username)
+    {
+        IAsyncEnumerable<Project> projects = await _projectService.GetUserProjectsAsync(username, HttpContext.RequestAborted);
+
+        return Ok(projects.Select(x => new ProjectDto(x.Id, x.Name)));
     }
 }
