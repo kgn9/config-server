@@ -1,6 +1,7 @@
 using Config.Server.Api.Http.Models;
 using Config.Server.Application.Contracts.Operations.Config;
 using Config.Server.Application.Contracts.Services;
+using Config.Server.Application.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -118,5 +119,30 @@ public class ConfigController : ControllerBase
         DeleteConfig.Result result = await _configService.DeleteConfigAsync(request, HttpContext.RequestAborted);
 
         return result is DeleteConfig.Result.Success ? Ok() : NotFound();
+    }
+
+    [HttpGet("{project}/{profile}/{environment}/{key}/history")]
+    public async Task<IActionResult> GetConfigHistoryByKeyAsync(
+        [FromRoute] string project,
+        [FromRoute] string profile,
+        [FromRoute] string environment,
+        [FromRoute] string key)
+    {
+        IAsyncEnumerable<HistoryItem> historyRecords = await _configService
+            .QueryConfigHistoryAsync(project, environment, profile, key, HttpContext.RequestAborted);
+
+        return await historyRecords.IsEmptyAsync(HttpContext.RequestAborted) ? NotFound() : Ok(historyRecords);
+    }
+
+    [HttpGet("{project}/{profile}/{environment}/history")]
+    public async Task<IActionResult> GetConfigHistoryAsync(
+        [FromRoute] string project,
+        [FromRoute] string profile,
+        [FromRoute] string environment)
+    {
+        IAsyncEnumerable<HistoryItem> historyRecords = await _configService
+            .QueryConfigHistoryAsync(project, environment, profile, null, HttpContext.RequestAborted);
+
+        return await historyRecords.IsEmptyAsync(HttpContext.RequestAborted) ? NotFound() : Ok(historyRecords);
     }
 }

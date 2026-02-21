@@ -19,19 +19,22 @@ internal class ConfigService : IConfigService
     private readonly IProjectRepository _projectRepository;
     private readonly IConfigQueryBuilderFactory _configQueryBuilderFactory;
     private readonly IProjectQueryBuilderFactory _projectQueryBuilderFactory;
+    private readonly IHistoryQueryBuilderFactory _historyQueryBuilderFactory;
 
     public ConfigService(
         IConfigRepository configRepository,
         IConfigHistoryRepository configHistoryRepository,
         IProjectRepository projectRepository,
         IConfigQueryBuilderFactory configQueryBuilderFactory,
-        IProjectQueryBuilderFactory projectQueryBuilderFactory)
+        IProjectQueryBuilderFactory projectQueryBuilderFactory,
+        IHistoryQueryBuilderFactory historyQueryBuilderFactory)
     {
         _configRepository = configRepository;
         _configHistoryRepository = configHistoryRepository;
         _projectRepository = projectRepository;
         _configQueryBuilderFactory = configQueryBuilderFactory;
         _projectQueryBuilderFactory = projectQueryBuilderFactory;
+        _historyQueryBuilderFactory = historyQueryBuilderFactory;
     }
 
     public async Task SetConfigAsync(SetConfig.Request request, CancellationToken cancellationToken)
@@ -195,6 +198,37 @@ internal class ConfigService : IConfigService
                 transaction.Complete();
                 return new DeleteConfig.Result.Failure();
         }
+    }
+
+    public async Task<IAsyncEnumerable<HistoryItem>> QueryConfigHistoryAsync(
+        string project,
+        string environment,
+        string profile,
+        string? key,
+        CancellationToken cancellationToken)
+    {
+        using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+        IConfigQueryBuilder configQueryBuilder = _configQueryBuilderFactory.Create();
+        ConfigQuery configQuery = configQueryBuilder
+            .WithProject(project)
+            .WithEnvironment(StringToConfigEnvironment(environment))
+            .WithProfile(profile)
+            .WithKeys(key is null ? Array.Empty<string>() : [key])
+            .Build();
+
+        IAsyncEnumerable<ConfigItem> configs = _configRepository.QueryConfigsAsync(configQuery, cancellationToken);
+
+        IHistoryQueryBuilder historyQueryBuilder = _historyQueryBuilderFactory.Create();
+        HistoryQuery historyQuery = historyQueryBuilder
+            .WithConfigIds(await configs.Select(x => x.Id).ToArrayAsync(cancellationToken))
+            .Build();
+
+        IAsyncEnumerable<HistoryItem> records = _configHistoryRepository.QueryRecordsAsync(historyQuery, cancellationToken);
+
+        transaction.Complete();
+
+        return records;
     }
 
     private static void FlattenJson(JsonElement element, string prefix, Dictionary<string, string> result)

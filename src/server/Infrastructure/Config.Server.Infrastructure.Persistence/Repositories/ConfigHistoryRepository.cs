@@ -4,6 +4,7 @@ using Config.Server.Application.Models.Entities;
 using Config.Server.Application.Models.Enums;
 using Config.Server.Infrastructure.Persistence.Extensions;
 using Npgsql;
+using NpgsqlTypes;
 using System.Data;
 using System.Runtime.CompilerServices;
 
@@ -71,7 +72,7 @@ public class ConfigHistoryRepository : IConfigHistoryRepository
             .AddParameter("cursor", query.Cursor)
             .AddParameter("config_ids", query.ConfigIds)
             .AddParameter("operations", query.Operations, dataTypeName: "config_history_kind[]")
-            .AddParameter("changed_by", query.ChangedBy)
+            .AddParameter("changed_by", query.ChangedBy, NpgsqlDbType.Text)
             .AddParameter("page_size", query.PageSize);
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
